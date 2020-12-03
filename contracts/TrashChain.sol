@@ -21,7 +21,7 @@ contract TrashChain{
         State state;            // variable for lifecycle
         address generator;      // household that generated it (ethereum address)
         address transporter;    // dumpster truck id ? (ethereum address)
-        address recyclePlant;   // end of the lifecycle for the trash bag (ethereum address)
+        address Plant;   // end of the lifecycle for the trash bag (ethereum address)
     }
     
     
@@ -64,7 +64,7 @@ contract TrashChain{
         address transporterID; //placeholder for compiling
         address plantID; //placeholder for compiling
         
-        tbags[idCount] = TBag({id: idCount, isRecyclable : _isRecyclable, weight : _weight, state : defaultState, generator : msg.sender, transporter : transporterID, recyclePlant : plantID});
+        tbags[idCount] = TBag({id: idCount, isRecyclable : _isRecyclable, weight : _weight, state : defaultState, generator : msg.sender, transporter : transporterID, Plant : plantID});
         emit ToPickUp(idCount); //tell the world or whoever listens
         idCount++;
     }
@@ -74,7 +74,7 @@ contract TrashChain{
         emit PickedUp(id);
     }
     function dropAtPlant(uint id) public pickedUP(id){ //modifier to see if state is correct
-        tbags[id].recyclePlant = msg.sender;
+        tbags[id].Plant = msg.sender;
         tbags[id].state = State.Deposited;
         emit Deposited(id);
         /*add here code to increase weight counter of user*/
@@ -87,7 +87,7 @@ contract TrashChain{
         state = uint(tbags[_id].state);
         generator = tbags[_id].generator;
         transporter = tbags[_id].transporter;
-        plant = tbags[_id].recyclePlant;
+        plant = tbags[_id].Plant;
         return(id, isRecyclable, weight, state, generator, transporter, plant);
     }
 }
