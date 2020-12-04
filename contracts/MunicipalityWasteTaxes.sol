@@ -1,3 +1,4 @@
+pragma solidity ^0.6.0;
 // import ownable
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 // import safemath
@@ -13,7 +14,7 @@ contract MunicipalityWasteTaxes is Ownable {
     
     // declare the initial deposit the every citizen will have to payable
     // for now we set it to approximately to 1/10 ETH ~ 50 €
-    uint deposit = 1 * 10^17 wei; 
+    uint deposit = 1 * 10 ** 17 wei; 
     
     // keep track of the total amount of taxes paid by all citizens
     // this is not necessary, this information can be accessed using this.balance
@@ -42,10 +43,14 @@ contract MunicipalityWasteTaxes is Ownable {
         uint totalNonRecyclableWaste; // keep track of the unrecycable waste produced the particular citizen
     }
     
+    //modifiers to limit function calls [address(0) is the default value of the mapping, by checking like below, we see if the account already exists]
+    modifier isntCitizenYet(address _address){require(citizens[_address].citizenAddress == address(0)); _;} //cannot create 2 accounts
+    modifier isCitizenCanPay(address _address){require(citizens[_address].citizenAddress != address(0) && citizens[_address].paidDeposit == false); _;} //can pay only if citizen and not already paid
+ 
     // create a function to instantiate citizens and add them to the citizens mapping
     // it will be external so that it can be called from outside this contract
     // WARNING: make sure each address can only call this function once
-    function addCitizen(string calldata _fiscalCode) external {
+    function addCitizen(string calldata _fiscalCode) external isntCitizenYet(msg.sender){
         
         // create an instance of Citizen 
         // pass the variables explicitely
@@ -69,7 +74,7 @@ contract MunicipalityWasteTaxes is Ownable {
     // to do so, it will need to be external and payable
     // the amount will be sent to this contract that is owned by the municipality
     // {potentially expand it so that one citizen can pay the deposit of another citizen}
-    function payDeposit() external payable {
+    function payDeposit() external payable isCitizenCanPay(msg.sender){
         // make sure that the amount sent using this function is at least equal to the deposit required (1/10 ETH)
         // otherwise revert the transaction
         // the value sent can be accessed using msg.value
@@ -128,4 +133,3 @@ contract MunicipalityWasteTaxes is Ownable {
     
     // create a function that can be executed only by the owner of the contract (the unicipality itself in our case)
     // at the end of the year that sets the paidDeposit field for every citizen to false
-}
