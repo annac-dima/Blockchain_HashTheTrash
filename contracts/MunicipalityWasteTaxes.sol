@@ -130,6 +130,7 @@ contract MunicipalityWasteTaxes is Ownable {
     //     return citizens[msg.sender].fiscalCode;
     // }
     
+    }
     
     // create a function that can be executed only by the owner of the contract (the unicipality itself in our case)
     // at the end of the year that sets the paidDeposit field for every citizen to false
