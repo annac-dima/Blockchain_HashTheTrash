@@ -8,10 +8,7 @@ pragma solidity >=0.5.0 <0.6.0;
   the same bin (maybe even produced by different people?). Do we emit an event for each specific bag, or do we just emit a single event 
   like event PickedUp(uint id, uint serialNumberBin, bool isRecyclable, uint totWeight (tot weight of the trash in the bin, Merkle root
   of the addresses of people who have thrown trash bags in the bin)?;
-- change or remove addresses from a specific role
 - check for overflows
-- transfer -> we shouldn't use it. Change this + attention to possible re-entrancy attacks
-- transferMoneyCitizens -> make it that it is possible to call this function only at the end of the year
 */
 
 contract TrashChain {
@@ -20,18 +17,53 @@ contract TrashChain {
     
     // Declare the owner of this contract
     address owner;
+    bool waitingTime;
+    uint start;
     
     /* Set the owner of this contract == address of municipality (e.g. owner = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4).
     For simplicity (since we don't know the address of the municipality), now we just set the owner = msg.sender and assume that only 
     the municipality can deploy this first part of the contract */
     constructor() public {
         owner = msg.sender;
+        waitingTime = false;
     }
     
-    // Struct to define the gps coordinates of a station
+    // Define a function that the municipality (owner of this contract) has to call at the beginning of each year. This is to set the 
+    // varibale start = 1st January of each year
+    function setBeginningYear () public returns (uint) {
+        // Only the municipality is allowed to call this function
+        require (msg.sender == owner);
+        require(waitingTime == false, "The function has already been called and the waitingTime has not expired yet");
+        
+        start = now;
+        waitingTime = true;
+        return start;
+    }
+    
+    // Function to set the variable waitingTime again equal to false when one year has passed since the setting of the variable start
+    function updateWaitingTime () public returns(bool){
+        if (now > start + 365 days) { //if you substitute 365 days with 30 seconds and try this on remix it should work fine 
+            waitingTime = false;
+        }
+        return waitingTime;
+    }
+    
+    // The following two functions are just to check if everything has worked fine
+    function showStartTime () public view returns (uint) {
+        return start;
+    }
+    function showWaitingTime () public view returns (bool) {
+        return waitingTime;
+    }
+    
+    
+    // Struct to define the gps coordinates of a station. Since latitudes and longitudes are floats (with 13 numbers after the dot),
+    // we basically store the information about latitude and longitude by multiplying the respective values by the variable SCALE = 10**13
+    uint256 private constant SCALE = 10 ** 13;
+    
     struct Station {
-        uint latitude; 
-        uint longitude;
+        int latitude; 
+        int longitude;
     }
     
     // List of stations defined by the municipality
@@ -60,8 +92,8 @@ contract TrashChain {
     mapping (address => string) roles;
     
     // Mapping to keep track of what kind of waste (i.e. recyclable or not) each bin collects 
-    // uint = serial number of the Bin, bool = isRecyclable 
-    mapping (uint => bool) bins;
+    // first uint = serial number of the Bin, string = [nonRecyclable, recyclable, removed]
+    mapping (uint => string) bins;
     
     // Function that allows the munucipality to assign the role of citizen. THe mapping citizens is also here updated
     function assignRoleCitizen (address _address) public {
@@ -84,22 +116,57 @@ contract TrashChain {
         roles[_address] = "truck";
     }
     
+    // Function that allows the municipality to change the role assigned to an address (either citizen or truck) to "dismissed". The
+    // municipality may want to do so when for example a citizen dies
+    function removeRole(address _address) public {
+        // Only the municipality has the power to remove roles
+        require(msg.sender == owner);
+        
+        delete roles[_address];
+    }
+    
+    // Function to check the role of a specific address
+    function checkRole(address _address) public view returns(string memory) {
+        return roles[_address];
+    }
+    
     // Function that allows the munucipality to assign the gps coordinates of allowed stations
-    function assignCoordinatesStation (uint _latitude, uint _longitude) public {
+    function assignCoordinatesStation (int _latitude, int _longitude) public {
         // Only the municipality has the power to assign roles
         require(msg.sender == owner);
         
         stations.push(Station(_latitude, _longitude));
     }
     
+    // Function that allows the municipality to remove a specific station from the list stations
+    function removeCoordinatesStation (int _latitude, int _longitude) public {
+        // Only the municipality has the power to remove a station
+        require(msg.sender == owner);
+        
+        for (uint i=0; i < stations.length; i++) {
+            Station memory myStation = stations[i];
+            if (myStation.latitude == _latitude && myStation.longitude == _longitude) {
+                delete stations[i];
+                break;
+            }
+        }
+    }
+    
     // Function that allows the municipality to define what kind of trash each bin collects
-    function assignTypeTrash (uint _serialNumberBin, bool _isRecyclable) public {
-        // Only the municipality has the power todefine what kind of trash each bin collects
+    function assignTypeTrash (uint _serialNumberBin, string memory _isRecyclable) public {
+        // Only the municipality has the power to define what kind of trash each bin collects
         require(msg.sender == owner);
         
         bins[_serialNumberBin] = _isRecyclable;
     }
     
+    // Function that allows the municipality to remove a specific bin from the list bins
+    function removeBinFromBins(uint _serialNumberBin) public {
+        // Only the municipality has the power to do so
+        require(msg.sender == owner);
+        
+        bins[_serialNumberBin] = "removed";
+    }
     
     
     ////////////// TRASH CHAIN  ////////////// 
@@ -155,9 +222,15 @@ contract TrashChain {
     function generateTbag(uint _weight, uint _serialNumberBin) public {
         // Only citizens can call this function
         require (keccak256(abi.encodePacked(roles[msg.sender])) == keccak256(abi.encodePacked("citizen")));
+        // The values of bins[_serialNumberBin] has to be different from removed
+        require(keccak256(abi.encodePacked(bins[_serialNumberBin])) != keccak256(abi.encodePacked("removed")));
         
         // Compute the necessary variables and emit the event
-        bool isRecyclable = bins[_serialNumberBin];
+        bool isRecyclable;
+        if (keccak256(abi.encodePacked(bins[_serialNumberBin])) == keccak256(abi.encodePacked("recyclable"))) {
+            isRecyclable = true;
+        } 
+
         emit ToPickUp(idBag, _serialNumberBin, isRecyclable, _weight, msg.sender); 
         
         // Increase either totalRecyclableWaste or totalNonRecyclableWaste of msg.sender on the basis of the type of trash bag
@@ -179,9 +252,14 @@ contract TrashChain {
     function pickFromBin(uint _serialNumberBin) public { 
         // Only trucks can call this function 
         require (keccak256(abi.encodePacked(roles[msg.sender])) == keccak256(abi.encodePacked("truck")));
+        // The values of bins[_serialNumberBin] has to be different from removed
+        require(keccak256(abi.encodePacked(bins[_serialNumberBin])) != keccak256(abi.encodePacked("removed")));
         
         // Compute the necessary variables and emit the event
-        bool isRecyclable = bins[_serialNumberBin];
+        bool isRecyclable;
+        if (keccak256(abi.encodePacked(bins[_serialNumberBin])) == keccak256(abi.encodePacked("recyclable"))) {
+            isRecyclable = true;
+        } 
         Bag[] storage bags = wasteInBin[_serialNumberBin];
         wasteInTruck[msg.sender] = bags;
         for (uint i=0; i < bags.length; i++) {
@@ -199,7 +277,7 @@ contract TrashChain {
     }
 
     // Function to check whether the final gps coordinates of the truck == location of an allowed station
-    function _checkFinalDestiantion (uint _latitude, uint _longitude) private view returns (bool, uint) {
+    function _checkFinalDestiantion (int _latitude, int _longitude) private view returns (bool, uint) {
         bool result = false;
         uint station_id = stations.length + 1;
         for (uint i=0; i < stations.length; i++) {
@@ -213,7 +291,7 @@ contract TrashChain {
     }
         
     // Function for the dumping of trash bags in the disposal station
-    function dropAtPlant(uint _latitude, uint _longitude) public { 
+    function dropAtPlant(int _latitude, int _longitude) public { 
         // Only trucks can call this function 
         require (keccak256(abi.encodePacked(roles[msg.sender])) == keccak256(abi.encodePacked("truck")));
         // Waste can be dumped only at allowed disposal stations
@@ -252,13 +330,15 @@ contract TrashChain {
         return address(this).balance;
     }
     
-    // Function to allow the municipality to withdraw the deposits
+    // Function to allow the municipality to withdraw the deposits (should we care about re-entrancy attacks here (even though the 
+    // municipality is the only one allowed to withdraw the deposits??)
     function withdrawAll() public {
         // only the municipality can withdraw funds
         require (msg.sender == owner);
         
         address payable to = msg.sender;
-        to.transfer(this.checkContractBalance());
+        (bool success, ) = to.call.value(this.checkContractBalance())("");
+        require(success, "External transfer failed!");
     }
     
     /* Function to determine the amount of tax reductions awarded by each citizen
@@ -302,13 +382,37 @@ contract TrashChain {
         // Update the variable taxReduction for the citizen in question
         citizens[_address].taxReductions = taxReduction;
         
+        // Set totalRecyclableWaste[_address] and totalNonRecyclableWaste[_address] = 0 for the computation of the tax reductions for
+        // the new year
+        delete totalRecyclableWaste[_address];
+        delete totalNonRecyclableWaste[_address];
+        
         return taxReduction;
+    }
+    
+    /*Function to define whether it is the appropriate time to call the function transferMoneyCitizens. The municipality can indeed
+    call this function only at the end of each year (range of time that the municipality is allowed to call this function = between 15th 
+    and 28th of december -> avoid to call this function the last day of december because of the problem of leap years) */
+    function _isAppropriateTime() private view returns(bool) {
+        // Only the municipality can call this function
+        require (msg.sender == owner);
+        
+        uint date1 = start + 349 days;
+        uint date2 = start + 362 days;
+        bool appropriate;
+        if (now >= date1 && now <= date2) {
+            appropriate = true;
+        }
+        return appropriate;
     }
     
     // Function to transfer the money to citizens on the basis of the amount of taxes they have awarded 
     function transferMoneyCitizens (address payable _address) public {
         // Only the municipality has the power to trasnfer money to citizens
         require (msg.sender == owner);
+        // Check whether it is the appropriate time for the municipality to call this function
+        require (_isAppropriateTime() == true);
+        
         // Check whether the address is the existing address of a citizen
         require (citizens[_address].isExist == true);
         // Check that the municipality has not paid the citizen in question yet
@@ -320,10 +424,10 @@ contract TrashChain {
         // Set the variable paidReductions for the citizen = true
         citizens[_address].paidReductions = true;
         
-        // Transfer the money
-        _address.transfer(taxReduction);
+        // Transfer the money (while avoiding re-entrancy attacks)
+        (bool success, ) = _address.call.value(taxReduction)("");
+        require(success, "External transfer failed!");
         
-    }
-    
+    }    
     
 }
