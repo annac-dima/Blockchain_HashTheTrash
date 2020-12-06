@@ -8,10 +8,15 @@ pragma solidity >=0.5.0 <0.6.0;
   the same bin (maybe even produced by different people?). Do we emit an event for each specific bag, or do we just emit a single event 
   like event PickedUp(uint id, uint serialNumberBin, bool isRecyclable, uint totWeight (tot weight of the trash in the bin, Merkle root
   of the addresses of people who have thrown trash bags in the bin)?;
-- check for overflows
+- differentiate the types of recyclabe waste (e.g. plastic, paper, etc.)?
 */
 
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v2.5.0/contracts/math/SafeMath.sol";
+
 contract TrashChain {
+    
+    // To avoid overflows
+    using SafeMath for uint;
     
     ////////////// MUNICIPALITY ////////////// 
     
@@ -42,7 +47,7 @@ contract TrashChain {
     
     // Function to set the variable waitingTime again equal to false when one year has passed since the setting of the variable start
     function updateWaitingTime () public returns(bool){
-        if (now > start + 365 days) { //if you substitute 365 days with 30 seconds and try this on remix it should work fine 
+        if (now > start + 365 days) { //if you substitute 365 days with 30 seconds and try this on remix it should work fine
             waitingTime = false;
         }
         return waitingTime;
@@ -235,9 +240,9 @@ contract TrashChain {
         
         // Increase either totalRecyclableWaste or totalNonRecyclableWaste of msg.sender on the basis of the type of trash bag
         if (isRecyclable == true) {
-            totalRecyclableWaste[msg.sender] = totalRecyclableWaste[msg.sender] + _weight;
+            totalRecyclableWaste[msg.sender] = totalRecyclableWaste[msg.sender].add(_weight);
         } else {
-            totalNonRecyclableWaste[msg.sender] = totalNonRecyclableWaste[msg.sender] + _weight;
+            totalNonRecyclableWaste[msg.sender] = totalNonRecyclableWaste[msg.sender].add(_weight);
         }
         
         // Update the mapping wasteInBin with the information of the bag that has just been thrown
@@ -354,9 +359,9 @@ contract TrashChain {
         uint taxReduction;
         
         // Rename relevant variables for simplicity
-        uint sum = totalRecyclableWaste[_address] + totalNonRecyclableWaste[_address];
+        uint sum = totalRecyclableWaste[_address].add(totalNonRecyclableWaste[_address]);
         // Since solidity does not support floats, we multiply by 100
-        uint amountRecycled = totalRecyclableWaste[_address]/sum * 100;
+        uint amountRecycled = (totalRecyclableWaste[_address].div(sum)).mul(100);
         
         // Different cases that determine the amount of tax reduction that the citizen in question has awarded
         if (amountRecycled < 40) {
@@ -428,6 +433,6 @@ contract TrashChain {
         (bool success, ) = _address.call.value(taxReduction)("");
         require(success, "External transfer failed!");
         
-    }    
-    
+    }
+        
 }
