@@ -43,13 +43,13 @@ contract MunicipalityWasteTaxesRBAC is Ownable {
     
     // create a function to give some addresses the role of citizens. This function will take an ethereum address as input
     // this function will be private, so it will be possible to call it only inside this contract
-    function _addCitizenRole(address _newCitizen) internal {
+    function _addCitizenRole(address _newCitizen) private {
         citizenRole.add(_newCitizen);
     }
     
     // create a function to give some specific addresses the role of garbage collectors. This function will take an ethereum address as input
     // only addresses having the municipalityManagers role will be able to call this function
-    function _addGarbageCollectorRole(address _newGarbageCollector) external onlyMunicipalityManager() {
+    function _addGarbageCollectorRole(address _newGarbageCollector) private onlyMunicipalityManager() {
         garbageCollectorRole.add(_newGarbageCollector);
     }
     
@@ -219,94 +219,165 @@ contract MunicipalityWasteTaxesRBAC is Ownable {
             // revert the transaction
             revert("The amount you are sending is not enough to cover the deposit");
         }
-            
     }
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // TRASH BAGS MANAGEMENT
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+    // NEW ADDITIONS
     // create an enum to define the type of waste in a given trash bag
     // initially we will include types such as Nonrecyclable, Paper, Palstic, Organic, Glass but it can be easily expanded
     enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass} //lifecycle of the trash bag
     // We cannot trust that citizens will tell the truth about the type of waste their are putting out
     // indeed, they will always have incentives to say that the type is anything other than `Unkown` or `Nonrecyclable`
     
+    struct Truck {
+        uint totWeight;
+        uint depositedStation;
+        WasteType wasteType;
+    }
+    
+    mapping(address => Truck) trucks;
+    
+    function addTruck(address _newTruck, WasteType _wasteType) external onlyMunicipalityManager() {
+        Truck memory myTruck = Truck(0, 0, _wasteType);
+        trucks[_newTruck] = myTruck;
+        _addGarbageCollectorRole(_newTruck);
+    }
+    
+    // Struct to define the gps coordinates of a station. Since latitudes and longitudes are floats (with 13 numbers after the dot),
+    // we basically store the information about latitude and longitude by multiplying the respective values by the variable SCALE = 10**13
+    uint256 private constant SCALE = 10 ** 13;
+    
+    struct Station {
+        int latitude; 
+        int longitude;
+        WasteType allowedWasteType;
+    }
+    
+    // Mapping of stations defined by the municipality
+    mapping (address => Station) stations;
+    
+    
+    Roles.Role private disposalStationRole;
+    
+    function _addDisposalStationRole(address _newDisposalStation) private onlyMunicipalityManager() {
+        disposalStationRole.add(_newDisposalStation);
+    }
+    
+    function _removeDisposalStationRole(address _oldDisposalStation) private onlyMunicipalityManager() {
+        disposalStationRole.remove(_oldDisposalStation);
+    }
+    
+    function addStation(address _newStation, int _latitude, int _longitude, WasteType _wasteType) external onlyMunicipalityManager() {
+        Station memory myStation = Station(_latitude, _longitude, _wasteType);
+        stations[_newStation] = myStation;
+        _addDisposalStationRole(_newStation);
+    }
+
+    modifier onlyDisposalStationRole() {
+        // check that the address calling a function has the disposalStationRole otherwise raise an error
+        require(disposalStationRole.has(msg.sender) == true, "Must have the disposalStationRole permission!");
+        // if the above requirement is satisfied continue with the function call
+        _;
+    }
+    
+
+    
     // creates events for each possible state to be communicated outside the chain
     // each event will communicate to the external world the unique id of the trash bag and other relevant information 
     // because of the scalability issues we decided to take an approach based on events. 
     
-    // the first event communicates that a new trashbag has been generate along with the id uniquely identify the trash bag, who created it and when 
-    event ToPickUp(bytes32 bagId, address generator, uint generationTime);
-    
-    // the second event communicates that the trash bag has been collected.  
+    // the first event communicates that the trash bag has been collected.  
     // in particular it logs the ethereum address of the citizen who generated the trash bag,
     // the ethereum address of the garbage collector, the time in which the trash bag was picked up, the weight of the trash bag
     // and the type of waste it contains
-    event PickedUp(address generator, address transporter, uint pickUpTime, uint wasteWeight, WasteType wasteType);
+    event PickedUp(address transporter, WasteType wasteType, bytes32 bagId, address generator, uint wasteWeight, uint pickUpTime);
     
-    // the third event communicates that the disposal plant received the trashbag
-    event Deposited(address transporter, address disposalPlant);
+    // the second event communicates that the disposal plant received the trashbag
+    event Deposited(address transporter, WasteType wasteType, uint totWeight, address disposalPlant);
+    
+    event Received(address disposalStation, address transporter);
     
     // create a function to compute the unique id of each bag
     // to get a unique id for a trash bag we can take the hash of the address of the citizen who generated the bag, the time in which
     // it was generated and the number of bags generated by that citizen.
     // Since we will pass the necessary data as parameters it wil be a pure function 
-    function _computeUniqueIdTrashBag(address _generator, uint _generationTime, uint _trashBagCount) private pure returns(bytes32) {
+    function _computeUniqueIdTrashBag(address _generator, uint _pickUpTime, uint _trashBagCount) private pure returns(bytes32) {
         // return the hash of the address who generated the trash bag, the time in which the bag was generated 
         // and the number of bash the citizen generated so far
         // in order to pass elements of different tyoe into the keccak256 function we first need to call abi.encodePacked()
-        return keccak256(abi.encodePacked(_generator, _generationTime, _trashBagCount));
+        return keccak256(abi.encodePacked(_generator, _pickUpTime, _trashBagCount));
     }
     
-    // create a function only citizen who paid the initial deposit can call to create a new trash bag
-    // in order to overcome the scalability issue we will not save all the data regarding every trash bag on the blockchain
-    // insted we will use events and store the data coming from the transaction logs of these events to an external database
-    function generateTrashBag() external onlyCitizenRole() isDepositPaid() {
-        
-        // this variable is not stored on the blockchain but will be used when emitting the event
-        bytes32 uniqueBagId;
-        
-        // compute the uniqueBagId using the function defined above
-        uniqueBagId = _computeUniqueIdTrashBag(msg.sender, now, citizens[msg.sender].trashBagCount);
-        
-        // emit the event containing the unique id of the trash bag, the address of the citizen who generated it and when it was generated
-        emit ToPickUp(uniqueBagId, msg.sender, now); 
-    }
-    
+
     // create a function only addresses having the garbageCollectorRole can call
     // We assume that this function is able to read from a sensor present on the trash bag the ethereum address of the citizen who generated it
     // Moreover, it will get the weight of the trash bag while the garbage collector checks its content (plastic, paper, organic) 
     // Then, it will increase either the totalNonRecyclableWaste or totalRecyclableWaste field of the citizen who generated the trash bag
     // Finally it will emit an event containing all the previous information plus the ethereum address of the garbage collector
-    function pickFromBin(address _generator, uint _wasteWeight, WasteType _wasteType) external onlyGarbageCollector() {
+    function pickFromBin(address _generator, uint _wasteWeight) external onlyGarbageCollector() {
         // create placeholder for the arguments the function takes as input
         // these variables will be stored in memory and not on the blockchain
-        address generator;
-        uint wasteWeight;
-        WasteType wasteType;
+        //address generator;
+        //uint wasteWeight;
+        //WasteType wasteType;
         
         // assign the values to the placeholders created above
-        generator = _generator;
-        wasteWeight = _wasteWeight;
-        wasteType = _wasteType;
+        //generator = _generator;
+        //wasteWeight = _wasteWeight;
+        //wasteType = _wasteType;
+        
+        // this variable is not stored on the blockchain but will be used when emitting the event
+        bytes32 uniqueBagId;
+        
+        // compute the uniqueBagId using the function defined above
+        uniqueBagId = _computeUniqueIdTrashBag(_generator, now, citizens[_generator].trashBagCount);
+        
+        // Type of waste the truck is carrying
+        WasteType _wasteType = trucks[msg.sender].wasteType;
+        
+        // Increase the total weight that the truck is carrying
+        trucks[msg.sender].totWeight = trucks[msg.sender].totWeight.add(_wasteWeight);
         
         // if the WasteType of the trash bag is Nonrecyclable, increment the totalNonRecyclableWaste field of the citizen by the weight of trash bag
-        if(wasteType == WasteType.Nonrecyclable){
-            citizens[generator].totalNonRecyclableWaste += wasteWeight;
+        if(_wasteType == WasteType.Nonrecyclable){
+            //citizens[_generator].totalNonRecyclableWaste += _wasteWeight;
             // ideally we would use the SafeMath method .add() for this addition
-            citizens[generator].totalNonRecyclableWaste.add(wasteWeight);
+            citizens[_generator].totalNonRecyclableWaste.add(_wasteWeight);
         } else {
             // increment the totalRecyclableWaste field of the citizen by the weight of trash bag 
-            citizens[generator].totalRecyclableWaste += wasteWeight;
+            //citizens[_generator].totalRecyclableWaste += wasteWeight;
             // ideally we would use the SafeMath method .add() for this addition
-            // citizens[generator].totalRecyclableWaste.add(wasteWeight);
+            citizens[_generator].totalRecyclableWaste.add(_wasteWeight);
         }
         
         // emit the PickedUp event containing the information regarding the citizen who generated the trash bag, the address of the 
         // garbage collector, the time in which the trash bas was collected, its weight and its type
-        emit PickedUp(_generator, msg.sender, now, _wasteWeight, _wasteType);
+        emit PickedUp(msg.sender, _wasteType, uniqueBagId, _generator, _wasteWeight, now);
     }
+    
+    
+    function dropAtStation(address _disposalStation, int _latitudeTruck, int _longitudeTruck) external onlyGarbageCollector() {
+        //check gps coordinates
+        require(stations[_disposalStation].latitude == _latitudeTruck && stations[_disposalStation].longitude == _longitudeTruck, "You are in the worng place!");
+        // check WasteType
+        require(trucks[msg.sender].wasteType == stations[_disposalStation].allowedWasteType, "You are at the wrong station!");
+        
+        emit Deposited(msg.sender, trucks[msg.sender].wasteType, trucks[msg.sender].totWeight, _disposalStation);
+        
+        trucks[msg.sender].depositedStation = trucks[msg.sender].totWeight;
+        
+        trucks[msg.sender].totWeight = 0;
+    }
+
+    
+    function receivedWaste(uint _wasteReceived, address _truck) external onlyDisposalStationRole() {
+       require(_wasteReceived ==  trucks[_truck].depositedStation, "the truck is fooling you!");
+       trucks[_truck].depositedStation = 0;
+       emit Received(msg.sender, _truck);
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     
@@ -368,3 +439,5 @@ contract MunicipalityWasteTaxesRBAC is Ownable {
     // at the end of the year that sets the paidDeposit field for every citizen to false
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
+    
+    
