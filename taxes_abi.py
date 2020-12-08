@@ -1,4 +1,5 @@
-abi = """[
+abi = """
+[
 	{
 		"inputs": [],
 		"stateMutability": "nonpayable",
@@ -311,4 +312,5 @@ abi = """[
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
-]"""
+]
+"""
