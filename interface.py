@@ -3,16 +3,16 @@ import json
 from taxes_abi import *
 
 ganache_url = 'HTTP://127.0.0.1:7545'
-
-web3 = Web3(Web3.HTTPProvider(ganache_url))
+w3 = Web3(Web3.HTTPProvider(ganache_url))
+w3.eth.defaultAccount = w3.eth.accounts[0] 
 
 print(web3.isConnected())
 
+# Contract abi
 taxes_abi = json.loads(abi)
 
-# municipality account
-web3.eth.defaultAccount = web3.eth.accounts[0] 
+address = '0x819b95284Eb64Ef8F8ea426b108379555dD81C3e'
+taxes_contract = w3.eth.contract(address=address, abi=taxes_abi)
 
-taxes_contract = web3.eth.contract(address='0x819b95284Eb64Ef8F8ea426b108379555dD81C3e', abi=taxes_abi)
 
-taxes
+# MUNICIPALITY
