@@ -3,16 +3,25 @@ import json
 from taxes_abi import *
 
 ganache_url = 'HTTP://127.0.0.1:7545'
-w3 = Web3(Web3.HTTPProvider(ganache_url))
-w3.eth.defaultAccount = w3.eth.accounts[0] 
+web3 = Web3(Web3.HTTPProvider(ganache_url))
+web3.eth.defaultAccount = web3.eth.accounts[0] 
 
 print(web3.isConnected())
 
-# Contract abi
-taxes_abi = json.loads(abi)
+# CONTRACT
+contract_abi = json.loads(abi)
+contract_bytecode = bytecode[0]
 
-address = '0x819b95284Eb64Ef8F8ea426b108379555dD81C3e'
-taxes_contract = w3.eth.contract(address=address, abi=taxes_abi)
+def deploy_contract(abi, bytecode):
+    contract = web3.eth.contract(abi=abi, bytecode=bytecode)
+    tx_hash = contract.constructor().transact()
+    tx_receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    return tx_receipt.contractAddress
+
+contract_address = deploy_contract(abi=contract_abi, bytecode=contract_bytecode)
+
+print(contract_address)
+
 
 
 # MUNICIPALITY
