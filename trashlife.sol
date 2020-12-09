@@ -1,6 +1,6 @@
 pragma solidity ^0.6.0; 
 
-import "citizen.sol";
+import "agents.sol";
 
 contract TrashLife is Agents {
     
@@ -19,18 +19,13 @@ contract TrashLife is Agents {
         _;
     }
     
-    modifier payTARI() {
-        require(citizens[msg.sender].payTARI == false, "You have to pay the deposit before you can continue!");
-        _;
-    }
-    
     event PayedTari(address _citizen, uint _time);
     
-    uint constant deposit_mq_less4 = 2 * 10 **15; //2.mul(10**15);
-    uint constant deposit_mq_more4 = 4 * 10 **15; //4.mul(10**15);
+    uint constant deposit_mq_less4 = 2 * 10 **15; //2.mul(10**15); // 1 euro
+    uint constant deposit_mq_more4 = 4 * 10 **15; //4.mul(10**15); // 2 euro
     uint constant deposit_trash = 1 * 10 **14; // 5 cents
     
-    // TARI
+    // -- TARI
     function MunicipalityBalance() external view onlyOwner returns(uint) {return address(this).balance;}
     
     function TariAmount(address _address) public onlyOwner {
@@ -58,8 +53,9 @@ contract TrashLife is Agents {
     }
     
 
-    // TRASH
-    //enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}
+    // -- TRASH
+    //PLUS: enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}
+    //PLUS: reduce uint 
     event PickedUp(address transporter, bool wasteType, bytes32 bagId, address generator, uint wasteWeight, uint pickUpTime);
     event Deposited(address transporter, bool wasteType, uint totWeight, address disposalPlant);
     event Received(address disposalStation, address transporter);
@@ -69,8 +65,7 @@ contract TrashLife is Agents {
     }
     
     function pick(address _citizen, uint _wasteWeight, uint _random) external onlyTruck() {
-        bytes32 uniqueBagId;
-        uniqueBagId = _computeIdBag(_citizen, now, _random);
+        bytes32 uniqueBagId = _computeIdBag(_citizen, now, _random);
         trucks[msg.sender].weight = trucks[msg.sender].weight.add(_wasteWeight);
         
         if(trucks[msg.sender].waste == false){
@@ -94,7 +89,7 @@ contract TrashLife is Agents {
        emit Received(msg.sender, _truck);
     }
     
-    // PAYOUT
+    // -- PAYOUT
     event PayedPayout (address _address, uint _value, uint _time);
     
     function computePayout(address payable _citizen) private view returns(uint) {
@@ -116,6 +111,7 @@ contract TrashLife is Agents {
 
     }
     
+    // CHECK 
     function withdraw() external onlyOwner {
         uint balance = address(this).balance;
         address payable to = msg.sender; 
@@ -123,7 +119,7 @@ contract TrashLife is Agents {
         require(success, "External transfer failed!");
     }
     
-    
+    // CHECK
     function givePayout(address payable _citizen) external payable onlyOwner {
         require(citizens[_citizen].active == true && citizens[_citizen].payTARI == true);
         
