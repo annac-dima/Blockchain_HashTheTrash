@@ -46,6 +46,7 @@ contract TrashLife is Agents {
 
         if(msg.value == citizens[msg.sender].TARI) {
             citizens[msg.sender].payTARI = true;
+            citizens[msg.sender].weight = 0; 
             emit PayedTari(msg.sender, now);
         } else {
                 revert("The amount you are sending doesn't correspond to the TARI you have to pay!");
