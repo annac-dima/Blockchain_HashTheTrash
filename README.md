@@ -2,7 +2,7 @@
 Implementation of a Blockchain for Rubbish and waste collection. 
 
 ```diff
-- text in red
+- _disposalStation è l'address e ce lo ricaviamo dal nome che è nel'excel perchè se io uso i miei address direttamente nell'excel poi dovremmo cambiarli ogni volta che usiamo un ganache diverso
 + text in green
 ! text in orange
 # text in gray
