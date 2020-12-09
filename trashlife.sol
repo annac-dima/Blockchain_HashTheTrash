@@ -125,7 +125,7 @@ contract TrashLife is Agents {
         require(citizens[_citizen].active == true && citizens[_citizen].payTARI == true);
         
         // problema dei rientrance attacks 
-        citizens[_citizen].payTARI == false;
+        citizens[_citizen].payTARI = false;
         uint payout = computePayout(_citizen);
         require(msg.sender.balance > payout, "Municipality has not enough funds!");
         
