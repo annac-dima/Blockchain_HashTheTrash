@@ -70,9 +70,9 @@ contract TrashLife is Agents {
         trucks[msg.sender].weight = trucks[msg.sender].weight.add(_wasteWeight);
         
         if(trucks[msg.sender].waste == false){
-            citizens[_citizen].totalNonRecyclableWaste.add(_wasteWeight);
-        } else {citizens[_citizen].totalRecyclableWaste.add(_wasteWeight);}
-        
+            citizens[_citizen].totalNonRecyclableWaste = citizens[_citizen].totalNonRecyclableWaste.add(_wasteWeight);
+        } else {citizens[_citizen].totalRecyclableWaste = citizens[_citizen].totalRecyclableWaste.add(_wasteWeight);}
+     
         emit PickedUp(msg.sender, trucks[msg.sender].waste, uniqueBagId, _citizen, _wasteWeight, now);
     }
     
