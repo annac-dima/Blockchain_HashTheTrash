@@ -1,6 +1,13 @@
 # FinTech 20598 - Final Group Project - Group 1
 Implementation of a Blockchain for Rubbish and waste collection. 
 
+```diff
+- text in red
++ text in green
+! text in orange
+# text in gray
+@@ text in purple (and bold)@@
+```
 
 ## To implement in Python: 
 ### 1. AGENTS CREATION 
@@ -15,7 +22,7 @@ Implementation of a Blockchain for Rubbish and waste collection.
     * _random: deve essere generato in python e fatta una nuova colonna 
     * _citizen è l'address e ce lo ricaviamo dal nome che è nel'excel perchè se io uso i miei address direttamente nell'excel poi dovremmo cambiarli ogni volta che usiamo un ganache diverso 
   - Drop bags at disposal station: `function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck)` - *EXCEL = gps_data.xlsx*
-    <font color="red">* _disposalStation è l'address e ce lo ricaviamo dal nome che è nel'excel perchè se io uso i miei address direttamente nell'excel poi dovremmo cambiarli ogni volta che usiamo un ganache diverso</font>
+    - * _disposalStation è l'address e ce lo ricaviamo dal nome che è nel'excel perchè se io uso i miei address direttamente nell'excel poi dovremmo cambiarli ogni volta che usiamo un ganache diverso
   - Station last check: `function received(bool _waste, address _truck, uint _weight)` - *EXCEL?*
 
 ### 4. REFUND
