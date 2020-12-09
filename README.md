@@ -3,7 +3,7 @@ Implementation of a Blockchain for Rubbish and waste collection.
 
 
 ### To implement in Python: 
-1. AGENTS CREATION 
+#### 1. AGENTS CREATION 
   - Creation of agents (Done) - *EXCEL* 
 
 2. TARI 
