@@ -93,7 +93,7 @@ contract TrashLife is Agents {
     // -- PAYOUT
     event PayedPayout (address _address, uint _value, uint _time);
     
-   function computePayout(address payable _citizen) public view returns(uint) {
+    function computePayout(address payable _citizen) public view returns(uint) {
         uint totalW = citizens[_citizen].totalRecyclableWaste.add(citizens[_citizen].totalNonRecyclableWaste);
         uint percentageRecycle = citizens[_citizen].totalRecyclableWaste.mul(100).div(totalW);
         
