@@ -116,7 +116,7 @@ contract TrashLife is Agents {
     function withdraw() external onlyOwner {
         uint balance = address(this).balance;
         address payable to = msg.sender; 
-        (bool success, ) = to.call.value(balance)("");
+        (bool success, ) = to.call{value:balance}("");
         require(success, "External transfer failed!");
     }
     
@@ -129,7 +129,7 @@ contract TrashLife is Agents {
         uint payout = computePayout(_citizen);
         require(msg.sender.balance > payout, "Municipality has not enough funds!");
         
-        (bool success, ) = _citizen.call.value(payout)("");
+        (bool success, ) = _citizen.call{value:payout}("");
         require(success, "External transfer failed!");
         emit PayedPayout (_citizen, payout, now);
     }
