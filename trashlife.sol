@@ -25,6 +25,8 @@ contract TrashLife is Agents {
     uint constant deposit_mq_more4 = 4 * 10 **15; //4.mul(10**15); // 2 euro
     uint constant deposit_trash = 1 * 10 **14; // 5 cents
     
+    bool _withdraw = false;
+    
     // -- TARI
     function MunicipalityBalance() external view onlyOwner returns(uint) {return address(this).balance;}
     
@@ -112,12 +114,14 @@ contract TrashLife is Agents {
         
     }
     
-    // CHECK 
-    function withdraw() external onlyOwner {
-        uint balance = address(this).balance;
+    function withdraw() public onlyOwner returns(uint){
+        require (_withdraw == false);
+        _withdraw = true;
+        uint balance = (address(this).balance).mul(88).div(100);
         address payable to = msg.sender; 
         (bool success, ) = to.call{value:balance}("");
         require(success, "External transfer failed!");
+        return balance;
     }
     
     // CHECK
