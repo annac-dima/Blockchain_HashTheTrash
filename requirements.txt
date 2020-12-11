@@ -1,5 +1,4 @@
-abi_bytecode 
-beautifulsoup4
+ beautifulsoup4
 forex_python
 json
 pandas
