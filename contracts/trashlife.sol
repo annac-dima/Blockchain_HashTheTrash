@@ -4,34 +4,56 @@ import "agents.sol";
 
 contract TrashLife is Agents {
     
+    // Define a modifier so that certain functions can only be called by Ethereum addresses associated with existing citizens
     modifier onlyCitizen() {
         require(citizens[msg.sender].active == true, "Must have the citizen permission!");
         _;
     }
     
+    // Define a modifier so that certain functions can only be called by Ethereum addresses associated with existing stations
     modifier onlyStation() {
         require(stations[msg.sender].active == true, "Must have the station permission!");
         _;
     }
     
+    // Define a modifier so that certain functions can only be called by Ethereum addresses associated with existing trucks
     modifier onlyTruck() {
         require(trucks[msg.sender].active == true, "Must have the truck permission!");
         _;
     }
     
+    
+    // Set the varible _withdraw equal to false to ensure that the municipality can call the "withdraw" function only once during the year
+    bool _withdraw = false;
+    
+    
+    // Define an event to signal that a citizen has paid the TARI
     event PayedTari(address _citizen, uint _time);
     
+    /* Assign some constant values to the variables deposit_mq_less4, deposit_mq_more4 and deposit_trash, that are going to be needed for 
+    the computation of the TARI. In particular, the TARI is here given by the sum of two parts:
+        - the first part is given by the product of the square meters of the house and a fixed fee which depends on the number of people in 
+          the  household. If there are less than four people in the household, the fee deposit_mq_less4 applies, whereas if the household
+          has more than four members, the fee deposit_mq_more4 applies.
+        - the second part is variable and depends on the total amount of waste produced by the household the year before. To be more 
+          specific, the total weight of waste produced by the household the year before is multiplied by a constant amount of money, i.e.
+          deposit_trash.
+    */
     uint constant deposit_mq_less4 = 2 * 10 **15; //2.mul(10**15); // 1 euro
     uint constant deposit_mq_more4 = 4 * 10 **15; //4.mul(10**15); // 2 euro
     uint constant deposit_trash = 1 * 10 **14; // 5 cents
     
-    bool _withdraw = false;
+
+    /////////////////////////  TARI  /////////////////////////
     
-    // -- TARI
+    // Define a function to check the balance of the contract at a given point in time
     function MunicipalityBalance() external view onlyOwner returns(uint) {return address(this).balance;}
     
+    // Define a function to compute the amount of TARI that a given citizen has to pay
     function TariAmount(address _address) public onlyOwner {
+        // Check that _address is associted with an existing citizen 
         require(citizens[_address].active == true, "Address is not a citizen!");
+        // Verify that the citizen has not paid the TARI yet. This is to avoid that the citizen pays the TARI twice in an year
         require(citizens[_address].payTARI == false, "You have alredy paied the TARI!");
         
         uint TARI = 0; 
@@ -43,9 +65,14 @@ contract TrashLife is Agents {
         citizens[_address].TARI = TARI;
     }
     
+    /* Define a function that can only be called by a citizen and allows him/her to pay the TARI to the municipality. To be more specific, 
+    the citizen sends the money to this contract, which is owned by the municipality */
     function payTari() external payable onlyCitizen {
+        // Verify that the citizen has not paid the TARI yet. This is to avoid that the citizen pays the TARI twice in an year 
         require(citizens[msg.sender].payTARI == false, "You have alredy paied the TARI!");
 
+        // This is to check whether the citizen is paying to the municipality the correct amount of money. If the amount that the citizen
+        // is sending does not correspond to the TARI he/she has to pay, the payment is reverted
         if(msg.value == citizens[msg.sender].TARI) {
             citizens[msg.sender].payTARI = true;
             citizens[msg.sender].weight = 0; 
@@ -56,17 +83,26 @@ contract TrashLife is Agents {
     }
     
 
-    // -- TRASH
+    /////////////////////////  TRASH CYCLE /////////////////////////
     //PLUS: enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}
     //PLUS: reduce uint 
+    
+    // Define the events that are going to keep track of the life cycle of each trash bag
     event PickedUp(address transporter, bool wasteType, bytes32 bagId, address generator, uint wasteWeight, uint pickUpTime);
     event Deposited(address transporter, bool wasteType, uint totWeight, address disposalPlant);
     event Received(address disposalStation, address transporter);
     
+    // Define a function to uniquely identify a trash bag
     function _computeIdBag(address _citizen, uint _pickUpTime, uint _random) private pure returns(bytes32) {
         return keccak256(abi.encodePacked(_citizen, _pickUpTime, _random));
     }
     
+    /* Define a function for the pick up of trash bags. Only trucks can call this function. 
+    As regards the arguments of the function, the address _citizen comes directly from some sensors placed in each truck, which scan and
+    store the information printed on each trash bag. Each truck is also equipped with a scale, so the uint _wasteWeight also comes 
+    directly from the external world. The uint random is simply a random number which is needed for computing the unique id of each 
+    trash bag.
+    */
     function pick(address _citizen, uint _wasteWeight, uint _random) external onlyTruck() {
         bytes32 uniqueBagId = _computeIdBag(_citizen, now, _random);
         trucks[msg.sender].weight = trucks[msg.sender].weight.add(_wasteWeight);
@@ -78,8 +114,15 @@ contract TrashLife is Agents {
         emit PickedUp(msg.sender, trucks[msg.sender].waste, uniqueBagId, _citizen, _wasteWeight, now);
     }
     
+    /* Define a function for the dumping of trash bags at the appropriate disposal station. The function can only be called by trucks, who
+    have to specify the address of the station as the input of the function. The two integers _latitudeTruck and _longitudeTruck represent
+    instead the GPS coordinates of the trucks, and come directly from the external world. */
     function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck) external onlyTruck() {
-        require(stations[_disposalStation].latitude == _latitudeTruck && stations[_disposalStation].longitude == _longitudeTruck, "You are in the worng place!");
+        // Check whether the GPS coordinates of the truck correspond to the location of a disposal station which the municipality
+        // has previously approved and included in the mapping stations
+        require(stations[_disposalStation].latitude == _latitudeTruck && stations[_disposalStation].longitude == _longitudeTruck, 
+            "You are at the wrong station!");
+        // Check whether the truck is at the right station on the basis of the type of waste it is carrying (recyclable or non-recyclable)
         require(trucks[msg.sender].waste == stations[_disposalStation].waste, "You are at the wrong station!");
         
         emit Deposited(msg.sender, trucks[msg.sender].waste, trucks[msg.sender].weight, _disposalStation);
@@ -87,15 +130,30 @@ contract TrashLife is Agents {
         trucks[msg.sender].weight = 0;
     }
     
+    /* Define a function to verify whether there is cohorence between the total amount of trash at a particular station and the amount of
+    trash that has been dumped to the station by trucks over time. This function can only be called by Station whenever a truck arrives 
+    and dumps its content. In particular, when calling this function, the station has to specify the address of the truck in question, 
+    the type of waste that the station disposes and the total weight of trash that is present at the station.
+    */
     function received(bool _waste, address _truck, uint _weight) external onlyStation() {
-       require(trucks[_truck].waste == _waste && stations[msg.sender].weight == _weight);
-       emit Received(msg.sender, _truck);
+        // Check whether the type of waste that the truck is carrying (recyclable or not) is coherent with the type of waste that the 
+        // station disposes, and whether the total amount of waste at the station (previous amount + weight of trash dumped by the 
+        // truck in question) is equal to the amount of waste that the station declares to have in this moment (i.e. _weight).
+        require(trucks[_truck].waste == _waste && stations[msg.sender].weight == _weight);
+        emit Received(msg.sender, _truck);
     }
     
-    // -- PAYOUT
+    
+    
+    /////////////////////////  PAYOUTS  /////////////////////////
+    
+    // Define an event to signal that the municipality has paid the respective payout to a citizen 
     event PayedPayout (address _address, uint _value, uint _time);
     
-    function computePayout(address payable _citizen) public view returns(uint) {
+    /* Define a function to compute the payout that a citizen has earned during the year. In particular, the payout depends on the
+    fraction of recyclable waste produced by the citizen during the year, and is computed as a percentage of the TARI paid
+    by the citizen at the beginning of the year */
+    function _computePayout(address payable _citizen) private view returns(uint) {
         uint totalW = citizens[_citizen].totalRecyclableWaste.add(citizens[_citizen].totalNonRecyclableWaste);
         uint percentageRecycle = citizens[_citizen].totalRecyclableWaste.mul(100).div(totalW);
         
@@ -114,6 +172,7 @@ contract TrashLife is Agents {
         
     }
     
+    
     function withdraw() public onlyOwner returns(uint){
         require (_withdraw == false);
         _withdraw = true;
@@ -124,18 +183,89 @@ contract TrashLife is Agents {
         return balance;
     }
     
-    // CHECK
+    /* ALTERNATIVE VERSION FOR WITHDRAW
+    function _isTimeToWithdraw() private view onlyOwner returns(bool) {
+        // just a check to ensure that the municipality waits at least one month after the beginning of the year before withdrawing
+        // the funds (by this time, most citizens should have already paid the TARI). If indeed the municipality calls the function 
+        // withdraw by mistake like on 3rd January, they cannot call the function withdraw again for the whole year. 
+        uint date = start + 31 days;
+        bool appropriate;
+        if (now >= date) {
+            appropriate = true;
+        }
+        return appropriate;
+    }
+    
+    function withdraw() public onlyOwner returns(uint){
+        require (_isTimeToWithdraw() == true);
+        require (_withdraw == false);
+        _withdraw = true;
+        uint balance = (address(this).balance).mul(88).div(100);
+        address payable to = msg.sender; 
+        (bool success, ) = to.call{value:balance}("");
+        require(success, "External transfer failed!");
+        return balance;
+    }
+    */
+    
+    
+    /*Function to define whether it is the appropriate time to call the function "givePayout". The municipality can indeed
+    call the "givePayout" function only at the end of each year. In particular, the municipality is allowed to call this function only
+    between 20th and 28th of december. This time range was chosen in order to to avoid the potential complications that could arise if, 
+    for some reasons, the municipality did not call the "setBeginningYear" function exactly on 1st January, or if the miners took days to 
+    mine the block with the "setBeginningYear" function. */
+    function _isAppropriateTime() private view onlyOwner returns(bool) {
+        uint date1 = start + 353 days;
+        uint date2 = start + 361 days;
+        bool appropriate;
+        if (now >= date1 && now <= date2) {
+            appropriate = true;
+        }
+        return appropriate; 
+    }
+    
+    // Define a function so that the municipality can pay the payouts earned by the citizens 
     function givePayout(address payable _citizen) external payable onlyOwner {
+        // Check that the address _citizen is associted with an existing citizen, and that the citizen in question has already paid the TARI
         require(citizens[_citizen].active == true && citizens[_citizen].payTARI == true);
+        // Check whether it is the appropriate time for the municipality to call this function
+        require (_isAppropriateTime() == true);
         
-        // problema dei rientrance attacks 
+        // Compute the payout earned by the citizen, and check whether the contract has enough funds to pay the due amount
+        uint payout = _computePayout(_citizen);
+        require(address(this).balance > payout, "Municipality has not enough funds!");
+        // Set the "payTARI" attribute of the citizen equal to false to avoid reetrancy attacks 
         citizens[_citizen].payTARI = false;
-        uint payout = computePayout(_citizen);
-        require(msg.sender.balance > payout, "Municipality has not enough funds!");
         
         (bool success, ) = _citizen.call{value:payout}("");
         require(success, "External transfer failed!");
         emit PayedPayout (_citizen, payout, now);
     }
- 
+    
+    
+    // NO TIME CONSTRAINT
+    function destroyContract() public onlyOwner {
+        selfdestruct(msg.sender);
+    }
+    
+    /* WITH TIME CONSTRAINT: this is just to guarantee that the function destroyContract can be called only after the range of time
+    when the function givePayout can be called. In other words, this is just to guarantee that the Municipality cannot call the function
+    destroyContract whenever they want (for example in June), but they have to wait at least until 29th December. Here there is no check
+    in place for veryfying that the municipality can call "destroyContract" only after having sent the payouts to all the citizens 
+    because this is done directly in the pyhton code
+    
+    function _timeToDestroyContract() private view onlyOwner returns(bool) {
+        uint date = start + 362 days;
+        bool appropriate;
+        if (now >= date) {
+            appropriate = true;
+        }
+        return appropriate;
+    }
+    function destroyContract() public onlyOwner {
+        require(_timeToDestroyContract() == true);
+        selfdestruct(msg.sender);
+    }
+    */
+   
 }
