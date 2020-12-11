@@ -1,6 +1,12 @@
 # FinTech 20598 - Final Group Project - Group 1
 Implementation of a Blockchain for Rubbish and waste collection. 
 
+## Installing `requirements` (Python3) 
+
+```shell script
+pip install -r requirements.txt
+```
+
 ## To implement in Python: 
 ### 1. AGENTS CREATION 
   - Creation of agents - *EXCEL = agents_data.xlsx* 
