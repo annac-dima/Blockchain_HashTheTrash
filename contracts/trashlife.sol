@@ -262,6 +262,7 @@ contract TrashLife is Agents {
         }
         return appropriate;
     }
+
     function destroyContract() public onlyOwner {
         require(_timeToDestroyContract() == true);
         selfdestruct(msg.sender);
