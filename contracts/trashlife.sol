@@ -44,12 +44,16 @@ contract TrashLife is Agents {
     uint constant deposit_trash = 1 * 10 **14; // 5 cents
     
 
+
     /////////////////////////  TARI  /////////////////////////
     
     // Define a function to check the balance of the contract at a given point in time
     function MunicipalityBalance() external view onlyOwner returns(uint) {return address(this).balance;}
     
-    // Define a function to compute the amount of TARI that a given citizen has to pay
+    /* Define a function to compute how much TARI a given citizen has to pay. This function is called by the municipality, and the citizen 
+    is notified about the amount of TARI he/she has to pay through a text message or an app notification. In this way, citizens do not have 
+    to bear the burden of calling this function, and their privacy is also protected. Indeed, other citizens cannot access the specific 
+    information about the amount of TARI that they have to pay.*/
     function TariAmount(address _address) public onlyOwner {
         // Check that _address is associted with an existing citizen 
         require(citizens[_address].active == true, "Address is not a citizen!");
@@ -82,11 +86,10 @@ contract TrashLife is Agents {
             }
     }
     
+    
 
     /////////////////////////  TRASH CYCLE /////////////////////////
-    //PLUS: enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}
-    //PLUS: reduce uint 
-    
+
     // Define the events that are going to keep track of the life cycle of each trash bag
     event PickedUp(address transporter, bool wasteType, bytes32 bagId, address generator, uint wasteWeight, uint pickUpTime);
     event Deposited(address transporter, bool wasteType, uint totWeight, address disposalPlant);
@@ -130,15 +133,15 @@ contract TrashLife is Agents {
         trucks[msg.sender].weight = 0;
     }
     
-    /* Define a function to verify whether there is cohorence between the total amount of trash at a particular station and the amount of
-    trash that has been dumped to the station by trucks over time. This function can only be called by Station whenever a truck arrives 
-    and dumps its content. In particular, when calling this function, the station has to specify the address of the truck in question, 
-    the type of waste that the station disposes and the total weight of trash that is present at the station.
-    */
+    /* Define a function to verify whether there is cohorence between the total amount of trash that a station declares to have received
+    up to now, and the amount of trash that has been actually dumped to the station by trucks over time. This function can only be 
+    called by a station whenever a truck arrives and dumps its content. In particular, when calling this function, the station has to 
+    specify the address of the truck in question, the type of waste that the station disposes and the total weight of trash that has been
+    dumped to the station so far.*/
     function received(bool _waste, address _truck, uint _weight) external onlyStation() {
         // Check whether the type of waste that the truck is carrying (recyclable or not) is coherent with the type of waste that the 
         // station disposes, and whether the total amount of waste at the station (previous amount + weight of trash dumped by the 
-        // truck in question) is equal to the amount of waste that the station declares to have in this moment (i.e. _weight).
+        // truck in question) is equal to the amount of waste that the station declares to have received up to now (i.e. _weight).
         require(trucks[_truck].waste == _waste && stations[msg.sender].weight == _weight);
         emit Received(msg.sender, _truck);
     }
@@ -172,9 +175,16 @@ contract TrashLife is Agents {
         
     }
     
-    
+    /* Define a function that allows the municipality to withdraw some funds from the contract before the end of the year. In particular, 
+    if we supposed that all citizens recycled more than 75% of their waste, the maximum amount that the municipality would have to pay is 
+    10% of the total TARI paid by all citizens (i.e. 10% of the money stored in this contract). Therefore, the municipality can safely
+    withdraw 88% of the funds stored in this contract and thus enjoy immediate liquidity, without compromising the ability of reimbursing 
+    all the citizens at the end of the year. An additional 2% of the funds is kept in the contract to also take into account eventual 
+    transaction costs (this is why the municipality can only withdraw 88% of the money stored in the contract and not 90%).*/
     function withdraw() public onlyOwner returns(uint){
+        // For simplicity, we assume that the municipality can call this function only once every year
         require (_withdraw == false);
+        // The variable _withdraw is set equal to true to avoid potential re-entrancy attacks
         _withdraw = true;
         uint balance = (address(this).balance).mul(88).div(100);
         address payable to = msg.sender; 
@@ -182,33 +192,7 @@ contract TrashLife is Agents {
         require(success, "External transfer failed!");
         return balance;
     }
-    
-    /* ALTERNATIVE VERSION FOR WITHDRAW
-    function _isTimeToWithdraw() private view onlyOwner returns(bool) {
-        // just a check to ensure that the municipality waits at least one month after the beginning of the year before withdrawing
-        // the funds (by this time, most citizens should have already paid the TARI). If indeed the municipality calls the function 
-        // withdraw by mistake like on 3rd January, they cannot call the function withdraw again for the whole year. 
-        uint date = start + 31 days;
-        bool appropriate;
-        if (now >= date) {
-            appropriate = true;
-        }
-        return appropriate;
-    }
-    
-    function withdraw() public onlyOwner returns(uint){
-        require (_isTimeToWithdraw() == true);
-        require (_withdraw == false);
-        _withdraw = true;
-        uint balance = (address(this).balance).mul(88).div(100);
-        address payable to = msg.sender; 
-        (bool success, ) = to.call{value:balance}("");
-        require(success, "External transfer failed!");
-        return balance;
-    }
-    */
-    
-    
+
     /*Function to define whether it is the appropriate time to call the function "givePayout". The municipality can indeed
     call the "givePayout" function only at the end of each year. In particular, the municipality is allowed to call this function only
     between 20th and 28th of december. This time range was chosen in order to to avoid the potential complications that could arise if, 
@@ -228,8 +212,9 @@ contract TrashLife is Agents {
     function givePayout(address payable _citizen) external payable onlyOwner {
         // Check that the address _citizen is associted with an existing citizen, and that the citizen in question has already paid the TARI
         require(citizens[_citizen].active == true && citizens[_citizen].payTARI == true);
-        // Check whether it is the appropriate time for the municipality to call this function
-        require (_isAppropriateTime() == true);
+        // Check whether it is the appropriate time for the municipality to call this function. This line of code is commented for the 
+        // purposes of the Python simulation. 
+        //require (_isAppropriateTime() == true);
         
         // Compute the payout earned by the citizen, and check whether the contract has enough funds to pay the due amount
         uint payout = _computePayout(_citizen);
@@ -242,18 +227,10 @@ contract TrashLife is Agents {
         emit PayedPayout (_citizen, payout, now);
     }
     
-    
-    // NO TIME CONSTRAINT
-    function destroyContract() public onlyOwner {
-        selfdestruct(msg.sender);
-    }
-    
-    /* WITH TIME CONSTRAINT: this is just to guarantee that the function destroyContract can be called only after the range of time
-    when the function givePayout can be called. In other words, this is just to guarantee that the Municipality cannot call the function
-    destroyContract whenever they want (for example in June), but they have to wait at least until 29th December. Here there is no check
-    in place for veryfying that the municipality can call "destroyContract" only after having sent the payouts to all the citizens 
-    because this is done directly in the pyhton code
-    
+    /* Define a function to ensure that the "destroyContract" function can only be called by the municipality after 29th December, i.e. 
+    when the "givePayout" function is not callable anymore. The municipality is therefore not allowed to call the "destroyContract" 
+    function whenever they want (for example in June), because they would otherwise be able get all the money stored in the contract  
+    and avoid reimbursing the citizens at the end of the year on the basis of their recycling behaviors. */
     function _timeToDestroyContract() private view onlyOwner returns(bool) {
         uint date = start + 362 days;
         bool appropriate;
@@ -263,10 +240,13 @@ contract TrashLife is Agents {
         return appropriate;
     }
 
+    /* Define a function that allows the municipality to destroy the contract at the end of each year. The money that are still
+    stored in the contract when this function is called are sent to the Ethereum address of the municipality. */
     function destroyContract() public onlyOwner {
-        require(_timeToDestroyContract() == true);
+        // Check whether it is the appropriate time for the municipality to call this function. This line of code is commented for the 
+        // purposes of the Python simulation. 
+        //require(_timeToDestroyContract() == true);
         selfdestruct(msg.sender);
     }
-    */
-   
+    
 }
