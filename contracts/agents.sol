@@ -4,8 +4,8 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/SafeMath.sol";
 
 contract Agents is Ownable {
-    /* Agents Contracts chas to be deployed by the municipaility. It defines the elements and functions to define the different agents involved in the system ecosystem and 
-    store relevant information about them. 
+    /* The Agents Contract has to be deployed by the municipality. It defines the elements and functions to define the different agents 
+    involved in the system ecosystem and stores relevant information about them on the blockchain. 
     Only the municipality is allowed to register or delete new agents. */
     
     using SafeMath for uint; 
@@ -31,7 +31,7 @@ contract Agents is Ownable {
         return start;
     }
     
-    /* Define a struct for each citizen so that the municipality can access relevant information about them and also check their fiscal 
+    /* Define a struct for each citizen so that the municipality can access relevant information about each citizen and also check their fiscal 
     situations. The struct is used to store data about each citizen. */
     struct Citizen {
         string name; // Full name
@@ -54,7 +54,7 @@ contract Agents is Ownable {
         bool active; // boolean to guarantee the existence and uniqueness of the truck
     }
     
-    // Define a struct to store relavant information about each station
+    // Define a struct to store relavant information about each disposal station
     struct Station {
         uint station_number; // Station id
         uint weight; // Cumulative sum of the weight of trash accumulated at the station during the year 
@@ -88,15 +88,17 @@ contract Agents is Ownable {
     function numberC() public view returns (uint) {return citizenCounter;}
     function numberS() public view returns (uint) {return stationCounter;}
     
-    // Following functions use onlyOwner modifier. Therefore only the owner of the contract, which is the municipality taht first deployed the contract, can call them. 
+    // Following functions use onlyOwner modifier. Therefore only the owner of the contract, which is the municipality that first deployed the contract, can call them. 
 
     // Define a function to add a new citizen to the system, and emit the respective event 
     function createCitizen(address payable _address, string memory _name, 
     uint _family, uint _house, uint _w) public onlyOwner {
+        // make sure that the citizen is not already present in the mapping
         require(citizens[_address].active == false);
+        // increase the total counter of citizens present in the mapping
         citizenCounter++; 
         
-        // initilize the citizen struct
+        // initilize the Citizen struct and add it to the mapping
         citizens[_address] = Citizen(
             _name,
             _family,
@@ -114,16 +116,22 @@ contract Agents is Ownable {
     /* Define a function to remove a specific citizen from the system. In pratice, the citizen in question is removed from the 
     mapping "citizens". */
     function deleteCitizen(address _address) public onlyOwner {
+        // make sure the citizen the municipality is trying to remove exists in the "citizens" mapping
         require(citizens[_address].active == true);
+        // remove the address from the mapping
         delete citizens[_address];
+        // decrease the total citizens counter
         citizenCounter--;
     }
     
     // Define a function to add a new truck to the system, and emit the respective event 
     function createTruck(address _address, bool _recycle) public onlyOwner {
+        // make sure the truck is not already present in the mapping
         require(trucks[_address].active == false);
+        // increase the total counter of trucks present in the mapping
         truckCounter++;
         truckNumber++;
+        // initilize the Truck struct and add it to the mapping
         trucks[_address] = Truck(truckNumber, 0, _recycle, true);
         emit TruckBorn(_address);
     }
@@ -131,16 +139,22 @@ contract Agents is Ownable {
     /* Define a function to remove a specific truck from the system. In pratice, the truck in question is removed from the 
     mapping "trucks" */
     function deleteTruck(address _address) public onlyOwner {
+        // make sure the truck the municipality is trying to remove exists in the "trucks" mapping
         require(trucks[_address].active == true);
+        // remove the address from the mapping
         delete trucks[_address];
+        // decrease the total trucks counter
         truckCounter--;
     }
     
     // Define a function to add a new station to the system, and emit the respective event 
     function createStation(address _address, bool _recycle, int _lat, int _long) public onlyOwner {
+        // make sure the station is not already present in the mapping
         require(stations[_address].active == false);
+        // increase the total counter of stations present in the mapping
         stationCounter++;
         stationNumber++;
+        // initilize the Station struct and add it to the mapping
         stations[_address] = Station(stationNumber, 0, _lat, _long, _recycle, true);
         emit StationBorn(_address, _long, _lat);
     }
@@ -148,8 +162,11 @@ contract Agents is Ownable {
     /* Define a function to remove a specific station from the system. In pratice, the station in question is removed from the 
     mapping "stations" */
     function deleteStation(address _address) public onlyOwner {
+        // make sure the station the municipality is trying to remove exists in the "stations" mapping
         require(stations[_address].active == true);
+        // remove the address from the mapping
         delete stations[_address];
+        // decrease the total stations counter
         stationCounter--;
     }
     
