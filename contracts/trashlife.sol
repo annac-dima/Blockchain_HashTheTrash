@@ -129,8 +129,11 @@ contract TrashLife is Agents {
         require(trucks[msg.sender].waste == stations[_disposalStation].waste, "You are at the wrong station!");
         
         emit Deposited(msg.sender, trucks[msg.sender].waste, trucks[msg.sender].weight, _disposalStation);
+        // Increase the weight counter of the station with the total weight received by the truck
         stations[_disposalStation].weight = stations[_disposalStation].weight.add(trucks[msg.sender].weight);
+        // Set the "weight" attribute of the truck equal to zero once the truck has dropped its content to the station
         trucks[msg.sender].weight = 0;
+
     }
     
     /* Define a function to verify whether there is cohorence between the total amount of trash that a station declares to have received
