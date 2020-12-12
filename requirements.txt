@@ -1,5 +1,5 @@
-beautifulsoup4
-forex_python
-pandas
-requests
-web3 
+beautifulsoup4 == 4.9.3
+forex_python == 1.5
+pandas == 1.1.5
+requests == 2.25.0
+web3 == 5.13.0
