@@ -1,5 +1,5 @@
 # FinTech 20598 - Final Group Project - Group 1
-Implementation of a Blockchain for Rubbish and waste collection. 
+Implementation of a Blockchain for Rubbish and waste collection. The project aims at building a blockchain system to be used by municipalities to track the waste produced by citizens. This would allow to monitor the amount as well as nature of the rubbish produced te record waste production. Moreover, all the rubbish produced is tracked from the citizen to the disposal station to avoid illegal dumping. Citizens are incentivized to recycle and to produce less waste as they receive a tax reduction according to their waste behaviour during the year. 
 
 ## Installing `requirements` (Python3) 
 
