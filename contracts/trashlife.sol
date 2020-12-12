@@ -94,7 +94,7 @@ contract TrashLife is Agents {
         return keccak256(abi.encodePacked(_citizen, _pickUpTime, _random));
     }
     
-    /* Define a function to regsiter the pick up of trash bags. Only truck drivers can call this function, specifying:
+    /* Define a function to register the pick up of trash bags. Only truck drivers can call this function, specifying:
         - the address of the citizen the bag belongs to: printed on the bag and scanned by the truck driver;
         - the weight of the bag: provided by a scale included in the truck;
         - a random integer to ensure the hash-ID of the bag is really unique.*/
@@ -227,7 +227,7 @@ contract TrashLife is Agents {
         return appropriate;
     }
 
-    /* Define a function to destroy the contract at the end of each year. Only the Municipality can call it
+    // Define a function to destroy the contract at the end of each year. Only the Municipality can call it
     function destroyContract() public onlyOwner {
         // Check whether it is the appropriate time for the Municipality to call this function. 
         //require(_timeToDestroyContract() == true); // commented for the purpose of Python testing
