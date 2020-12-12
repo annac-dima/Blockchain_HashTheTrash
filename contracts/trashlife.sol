@@ -23,7 +23,7 @@ contract TrashLife is Agents {
     }
     
     
-    // Set the varible _withdraw equal to false to ensure that the municipality can call the "withdraw" function only once during the year
+    // Set the variable _withdraw equal to false to ensure that the municipality can call the "withdraw" function only once during the year
     bool _withdraw = false;
     
     
@@ -35,7 +35,7 @@ contract TrashLife is Agents {
         - the first part is given by the product of the square meters of the house and a fixed fee which depends on the number of people in 
           the  household. If there are less than four people in the household, the fee deposit_mq_less4 applies, whereas if the household
           has more than four members, the fee deposit_mq_more4 applies.
-        - the second part is variable and depends on the total amount of waste produced by the household the year before. To be more 
+        - the second part is variable and depends on the total amount of waste produced by the household the previous year. To be more 
           specific, the total weight of waste produced by the household the year before is multiplied by a constant amount of money, i.e.
           deposit_trash.
     */
@@ -52,13 +52,13 @@ contract TrashLife is Agents {
     
     /* Define a function to compute how much TARI a given citizen has to pay. This function is called by the municipality, and the citizen 
     is notified about the amount of TARI he/she has to pay through a text message or an app notification. In this way, citizens do not have 
-    to bear the burden of calling this function, and their privacy is also protected. Indeed, other citizens cannot access the specific 
+    to bear the burden of calling this function, and their privacy is also protected. Indeed, other citizens cannot directly access the specific 
     information about the amount of TARI that they have to pay.*/
     function TariAmount(address _address) public onlyOwner {
         // Check that _address is associted with an existing citizen 
         require(citizens[_address].active == true, "Address is not a citizen!");
         // Verify that the citizen has not paid the TARI yet. This is to avoid that the citizen pays the TARI twice in an year
-        require(citizens[_address].payTARI == false, "You have alredy paied the TARI!");
+        require(citizens[_address].payTARI == false, "You have alredy paid the TARI!");
         
         uint TARI = 0; 
         if(citizens[_address].family <= 4) {
@@ -160,18 +160,26 @@ contract TrashLife is Agents {
     fraction of recyclable waste produced by the citizen during the year, and is computed as a percentage of the TARI paid
     by the citizen at the beginning of the year */
     function _computePayout(address payable _citizen) private view returns(uint) {
+        // Get the total amount of waste a citizen has generated during the current year
         uint totalW = citizens[_citizen].totalRecyclableWaste.add(citizens[_citizen].totalNonRecyclableWaste);
+        // Compute the percentage of recyclable waste
         uint percentageRecycle = citizens[_citizen].totalRecyclableWaste.mul(100).div(totalW);
         
+        // If the percentage of recyclable waste is below 25% the citizen is not eligible for a reimburse 
         if (percentageRecycle <= 25) {
             return 0; 
         } 
+        // If the percentage of recyclable waste is between 25% and 50% the citizen receives back 2% of the TARI paid
+        // at the beginning of the year
         if (percentageRecycle <= 50 && percentageRecycle > 25) {
             return citizens[_citizen].TARI.mul(2).div(100);
         }
+        // If the percentage of recyclable waste is between 50% and 75% the citizen receives back 5% of the TARI paid
+        // at the beginning of the year
         if (percentageRecycle > 50 && percentageRecycle <= 75) {
             return citizens[_citizen].TARI.mul(5).div(100);
         }
+        // If the percentage of recyclable waste is above 75% the citizen receives back 5% of the TARI paid at the beginning of the year
         if (percentageRecycle > 75) {
             return citizens[_citizen].TARI.mul(10).div(100);
         }
