@@ -1,8 +1,5 @@
 beautifulsoup4
 forex_python
-json
 pandas
-random
 requests
-time
 web3 
