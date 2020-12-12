@@ -2,18 +2,15 @@ import json
 import pandas as pd
 import time
 from web3 import Web3
-from abi_bytecode import abi # saved externally as .py
+from contracts.abi_bytecode import abi # saved externally as .py
 
+# THINGS WE NEED!!  
 # Connecting to ganache through opened up PORT
 ganache_url = 'HTTP://127.0.0.1:7545'      #change here if different
 web3 = Web3(Web3.HTTPProvider(ganache_url))
 web3.isConnected()
-    
-
-# THINGS WE NEED!!  
-df = pd.read_csv('events.csv')
-abi = json.loads(abi)
-
+abi = json.loads(abi)     # To le the log filter understand the logs
+df = pd.DataFrame()       # Empty only the first time
 
 def connect_to_contract():
     """
@@ -22,7 +19,7 @@ def connect_to_contract():
 
     with open('data/ctr_addr.txt', 'r') as f:
         address = f.read()
-    print(f'Connected to ctr : {​​​​address}​​​​')
+    print(f'Connected to ctr : {address}')
 
     ctr = web3.eth.contract(address = address, abi = abi)
     return ctr
@@ -44,11 +41,12 @@ def handle_dataframe(df, event):
     """
     Update and save event logs in an external file
     """
-
+    
+    df = pd.read_csv('data/events_log.csv')
     if not isinstance(event, dict):
         raise Exception('The event must be passed in dictionary form')
     df = df.append(event, ignore_index=True)
-    df.to_csv('events.csv', index=False)
+    df.to_csv('data/events_log.csv', index=False)
 
 
 def handle_event(e):
@@ -59,6 +57,8 @@ def handle_event(e):
     args = dict(e['args'])
     args.update(dict(e))
     del args['args']
+    
+    return args
 
 
 def log_loop(df, filter_list, poll_interval):
@@ -69,8 +69,10 @@ def log_loop(df, filter_list, poll_interval):
     while True:
         for event_filter in filter_list:
             for e in event_filter.get_new_entries():
+                print(e['event'])
                 ev = handle_event(e)
                 handle_dataframe(df, ev)
+                
 
         time.sleep(poll_interval)
 
