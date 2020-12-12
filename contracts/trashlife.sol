@@ -130,11 +130,10 @@ contract TrashLife is Agents {
 
     }
     
-    /* Define a function to verify whether there is cohorence between the total amount of trash that a station declares to have received
-    up to now, and the amount of trash that has been actually dumped to the station by trucks over time. This function can only be 
-    called by a station whenever a truck arrives and dumps its content. In particular, when calling this function, the station has to 
-    specify the address of the truck in question, the type of waste that the station disposes and the total weight of trash that has been
-    dumped to the station so far.*/
+    /* Define a function to verify the weight of waste the station has received by a trcuk. Only stations can call this function, specifying:
+        - the address of the truck whose cargo has been dumped;
+        - the waste type of the station;
+        - the total weight of waste entered in the station up to that moment. 
     function received(bool _waste, address _truck, uint _weight) external onlyStation() {
         // Verify the coherence between the waste type (recyclable or not) of the truck and the station
         // Verify the total amount of waste at the station (previous amount + weight of trash dumped by the 
@@ -147,7 +146,7 @@ contract TrashLife is Agents {
     
     /////////////////////////  PAYOUTS  /////////////////////////
     
-    // Define an event to signal that the municipality has paid the respective payout to a citizen, including payment amount and time
+    // Define an event to signal that the Municipality has paid the respective payout to a citizen, including payment amount and time
     event PayedPayout (address _address, uint _value, uint _time);
     
     // Define a function to compute, at the end of the year, the payout a citizen is entitled to
@@ -178,10 +177,10 @@ contract TrashLife is Agents {
     
     // Define a function that allows the Municipality to withdraw some funds from the contract before the end of the year
     function withdraw() public onlyOwner returns(uint){
-        // For simplicity the municipality can call this function only once every year
+        // For simplicity the Municipality can call this function only once every year
         require (_withdraw == false);
         _withdraw = true;
-        // The municipality can withdraw 88% of the funds stored in this contract, since they won't be necessary for any payout
+        // The Municipality can withdraw 88% of the funds stored in this contract, since they won't be necessary for any payout
         uint balance = (address(this).balance).mul(88).div(100);
         address payable to = msg.sender; 
         (bool success, ) = to.call{value:balance}("");
@@ -202,16 +201,15 @@ contract TrashLife is Agents {
     
     // Define a function to allow the Municipality paying the payouts 
     function givePayout(address payable _citizen) external payable onlyOwner {
-        // Check that the address _citizen is associted with an existing citizen, and that the citizen in question has already paid the TARI
+        // Verify the address _citizen is associted with an existing citizen, and that the citizen in question has already paid the TARI
         require(citizens[_citizen].active == true && citizens[_citizen].payTARI == true);
-        // Check whether it is the appropriate time for the municipality to call this function. This line of code is commented for the 
-        // purposes of the Python simulation. 
-        //require (_isAppropriateTime() == true);
+        // Verify it is the appropriate time for the Municipality to call this function. 
+        //require (_isAppropriateTime() == true); // commented for the purpose of Python testing
         
         // Compute the payout earned by the citizen, and check whether the contract has enough funds to pay the due amount
         uint payout = _computePayout(_citizen);
         require(address(this).balance > payout, "Municipality has not enough funds!");
-        // Set the "payTARI" attribute of the citizen equal to false to avoid reetrancy attacks 
+        // Set the "payTARI" attribute of the citizen equal to false to avoid re-etrancy attacks 
         citizens[_citizen].payTARI = false;
         
         (bool success, ) = _citizen.call{value:payout}("");
@@ -219,12 +217,9 @@ contract TrashLife is Agents {
         emit PayedPayout (_citizen, payout, now);
     }
     
-    /* Define a function to ensure that the "destroyContract" function can only be called by the municipality after 29th December, i.e. 
-    when the "givePayout" function is not callable anymore. The municipality is therefore not allowed to call the "destroyContract" 
-    function whenever they want (for example in June), because they would otherwise be able get all the money stored in the contract  
-    and avoid reimbursing the citizens at the end of the year on the basis of their recycling behaviors. */
+    // Define a function to ensure the Municipality can invoke the "destroyContract" function only after the 29th of December
     function _timeToDestroyContract() private view onlyOwner returns(bool) {
-        uint date = start + 362 days;
+        uint date = start + 362 days; // 29th of December, after payouts are all payed 
         bool appropriate;
         if (now >= date) {
             appropriate = true;
@@ -234,10 +229,10 @@ contract TrashLife is Agents {
 
     /* Define a function to destroy the contract at the end of each year. Only the Municipality can call it
     function destroyContract() public onlyOwner {
-        // Check whether it is the appropriate time for the municipality to call this function. 
-        //require(_timeToDestroyContract() == true); // commented for the purpose of Python test
+        // Check whether it is the appropriate time for the Municipality to call this function. 
+        //require(_timeToDestroyContract() == true); // commented for the purpose of Python testing
         selfdestruct(msg.sender);
-        // The contract balance is automatically transferred to msg.sender, that is the Municipality
+        // The contract balance is automatically transferred to the msg.sender, that is the Municipality
     }
     
 }
