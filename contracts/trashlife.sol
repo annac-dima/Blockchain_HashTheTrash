@@ -133,7 +133,7 @@ contract TrashLife is Agents {
     /* Define a function to verify the weight of waste the station has received by a trcuk. Only stations can call this function, specifying:
         - the address of the truck whose cargo has been dumped;
         - the waste type of the station;
-        - the total weight of waste entered in the station up to that moment. 
+        - the total weight of waste entered in the station up to that moment.*/
     function received(bool _waste, address _truck, uint _weight) external onlyStation() {
         // Verify the coherence between the waste type (recyclable or not) of the truck and the station
         // Verify the total amount of waste at the station (previous amount + weight of trash dumped by the 
