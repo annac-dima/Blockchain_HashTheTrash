@@ -4,6 +4,9 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/SafeMath.sol";
 
 contract Agents is Ownable {
+    /* Agents Contracts chas to be deployed by the municipaility. It defines the elements and functions to define the different agents involved in the system ecosystem and 
+    store relevant information about them. 
+    Only the municipality is allowed to register or delete new agents. */
     
     using SafeMath for uint; 
     using SafeMath for int;
@@ -29,7 +32,7 @@ contract Agents is Ownable {
     }
     
     /* Define a struct for each citizen so that the municipality can access relevant information about them and also check their fiscal 
-    situations */
+    situations. The struct is used to store data about each citizen. */
     struct Citizen {
         string name; // Full name
         uint family; // Number of family members
@@ -40,7 +43,7 @@ contract Agents is Ownable {
         uint totalRecyclableWaste; // Total amount of recyclable waste produced during the year 
         uint totalNonRecyclableWaste; // Total amount of non-recyclable waste produced during the year 
         bool payTARI; // boolean to check whether a specific citizen has already paid the TARI
-        bool active; // boolean to guarantee the uniqueness of the citizen. 
+        bool active; // boolean to guarantee the existence and uniqueness of the citizen. 
     }
     
     // Define a struct to store relavant information about each truck
@@ -48,17 +51,17 @@ contract Agents is Ownable {
         uint truck_number; // Truck id
         uint weight; // Total weight that the truck is carrying
         bool waste; // Type of waste (recyclable or not) that the truck is carrying 
-        bool active; // boolean to guarantee the uniqueness of the truck
+        bool active; // boolean to guarantee the existence and uniqueness of the truck
     }
     
     // Define a struct to store relavant information about each station
     struct Station {
         uint station_number; // Station id
-        uint weight; // Total weight of trash at the station
+        uint weight; // Cumulative sum of the weight of trash accumulated at the station during the year 
         int latitude; // Gps coordinates of the station (latitude)
         int longitude; // Gps coordinates of the station (longitude)
         bool waste; // Type of waste that the station disposes 
-        bool active; // boolean to guarantee the uniqueness of the station
+        bool active; // boolean to guarantee the existence and uniqueness of the station
     }
     
     // Define some mappings so that each truck, citizen and station is uniquely associated to an Ethereum address
@@ -84,6 +87,8 @@ contract Agents is Ownable {
     function numberT() public view returns (uint) {return truckCounter;}
     function numberC() public view returns (uint) {return citizenCounter;}
     function numberS() public view returns (uint) {return stationCounter;}
+    
+    // Following functions use onlyOwner modifier. Therefore only the owner of the contract, which is the municipality taht first deployed the contract, can call them. 
 
     // Define a function to add a new citizen to the system, and emit the respective event 
     function createCitizen(address payable _address, string memory _name, 
@@ -91,6 +96,7 @@ contract Agents is Ownable {
         require(citizens[_address].active == false);
         citizenCounter++; 
         
+        // initilize the citizen struct
         citizens[_address] = Citizen(
             _name,
             _family,
@@ -106,7 +112,7 @@ contract Agents is Ownable {
     }
     
     /* Define a function to remove a specific citizen from the system. In pratice, the citizen in question is removed from the 
-    mapping "citizens" */
+    mapping "citizens". */
     function deleteCitizen(address _address) public onlyOwner {
         require(citizens[_address].active == true);
         delete citizens[_address];
