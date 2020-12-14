@@ -34,20 +34,20 @@ contract TrashLife is Agents {
     // Define an event to signal that a citizen has paid the TARI and when this happened
     event PayedTari(address _citizen, uint _time);
     
-    /* Define fixed fees to compute the TARI amount each citizen must pay; the TARI amount is defined as the sum of two parts:
-        1. Square meters of the house times a fee depending on the number of household members: If there are 4 or less people in the household, 
-        the deposit_mq_less4 fee applies, it corresponds to about 1 €/mq. If there are more than 4 people, deposit_mq_more4 applies, that is about 2€/mq.
-        2. Total waste produced by the household the previous year times a constant fee: Waste is measured in kg. The fee, deposit_trash, doesn't depend on 
-        anything and it's about 5 cents/kg. */
+    /* Define fixed fees to compute the TARI amount each citizen must pay. The TARI amount is defined as the sum of two parts:
+        1. Square meters of the house multiplied by a fee depending on the number of household members. If there are 4 or less people in the household, 
+        the deposit_mq_less4 fee applies, which corresponds to about 1 €/mq. If there are more than 4 people, deposit_mq_more4 applies, which is about 2€/mq.
+        2. Total waste produced by the household the previous year, times a constant fee (waste is measured in kg). The fee, i.e. deposit_trash, doesn't depend on 
+        any external variable and it's about 5 cents/kg. */
     uint constant deposit_mq_less4 = 2 * 10 **15; 
     uint constant deposit_mq_more4 = 4 * 10 **15;
     uint constant deposit_trash = 1 * 10 **14;
     
-    // Define a function, only for the Municipaliy, to check the balance of the contract at a given point in time
+    // Define a function to check the balance of the contract at a given point in time. It can only be called by the Municipality
     function MunicipalityBalance() public view onlyOwner returns(uint) {return address(this).balance;}
     
     // Define a function to compute how much TARI a given citizen has to pay. It is invoked at the beginning of the year by the Municipality, 
-    // that is in charge of informing each citizen 
+    // who is then in charge of informing each citizen (e.g. through a text message or an app notification)
     function TariAmount(address _address) public onlyOwner {
         // Verify _address is associted with an existing citizen 
         require(citizens[_address].active == true, "Address is not a citizen!");
@@ -64,9 +64,9 @@ contract TrashLife is Agents {
         citizens[_address].TARI = TARI;
     }
     
-    // Define a function, only for citizens, to pay the exact amount of TARI. Amounts are expressend in wei and stored in this contract. 
+    // Define a function, only invokable by citizens, to pay the exact amount of TARI. Amounts are expressend in wei and are stored in this contract. 
     function payTari() external payable onlyCitizen {
-        // Verify the citizen has not paid the TARI yet. This is to avoid that the citizen pays twice in a year 
+        // Verify the citizen has not paid the TARI yet. This is to avoid that the citizen pays twice a year 
         require(citizens[msg.sender].payTARI == false, "You have alredy paied the TARI!");
 
         // Verify the citizen is paying the correct amount of money
@@ -180,7 +180,10 @@ contract TrashLife is Agents {
         // For simplicity the Municipality can call this function only once every year
         require (_withdraw == false);
         _withdraw = true;
-        // The Municipality can withdraw 88% of the funds stored in this contract, since they won't be necessary for any payout
+        /* The Municipality can withdraw 88% of the funds stored in this contract, since they won't be necessary for any payout
+        (even assuming that all citizens recycled more than 75% of their waste, the maximum amount that the municipality would have 
+        to pay in payouts is 10% of the money stored in this contract. An additional 2% of the funds is kept in the contract to also 
+        take into account eventual transaction costs) */
         uint balance = (address(this).balance).mul(88).div(100);
         address payable to = msg.sender; 
         (bool success, ) = to.call{value:balance}("");
