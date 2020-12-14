@@ -9,7 +9,7 @@ pip install -r requirements.txt
 2. Run `HashTheTrash.ipynb`: to simulate the creation and collection of waste. To work correctly, this file needs:
   * 10 ETH accounts: there're the Municipality, 5 citizens, 1 non-recyclable truck and 1 recyclable one, 1 non-recyclable disposal station and 1 recyclable one.
   * `example_data.xlsx`: file containing necessary data to perform a simulation. Stored in `data` folder. 
-  * 2 Smart Contracts: they and their ABI code are stored in `contracts` folder. 
+  * Two Smart Contracts: stored in `contracts` folder with their ABI code.    
 
 
 ## Trash Chain 
