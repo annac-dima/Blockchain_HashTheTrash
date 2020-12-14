@@ -1,4 +1,4 @@
-# Rubbish Blockchain 
+# HASH the TRASH - A Rubbish Blockchain Application
 HashTheTrash is a blockchain application for real-time waste tracking, based on two Ethereum Smart Contracts. The aim of this project is to increase the transparency along all the steps involved in the trash chain in order to improve waste management processes in developed countries, such as Italy, taken as reference for the simulation. 
 
 #### Why a rubbish blockchain?
