@@ -35,7 +35,7 @@ It's the beginning of the year and the Municipality must deploy the `agents.sol`
 
 ### 2. TARI 
   - **Municipality computes TARI for all citizens:** `function TariAmount(address _address)`  
-Before the end of January, the Municipality computes the TARI each citizen must pay, according to the following formula:<br>    
+Before the end of January, the Municipality computes the TARI each citizen must pay, according to the following formula:<br>      
          ![equation](https://latex.codecogs.com/gif.latex?TARI_%7Bt%7D%20%3D%20%5Cleft%20%28fee_%7Bsqm%7D%5Ccdot%20sqm%5Cright%20%29%20&plus;%20%5Cleft%20%28%20fee_%7Bwaste_%7Bt-1%7D%7D%20%5Ccdot%20waste_%7Bt-1%7D%20%5Cright%20%29)  
 The amount depends on how big is the house of the citizen (measured in square meter) and how much waste he produced during the previous year. More information about the TARI computation are provided in the Jupyter notebook. 
 
@@ -50,8 +50,8 @@ The Municipality notifies the due TARI amount to each citizen, who must invoke t
   - **Station last check:** `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data*
 
 ### 4. REFUND
-  - **Municipality computes payout for all citizens and pays:** `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`  At the end of the year, more specifically between 20th and 28th of december, the Municipality computes the refund each citizen can benefit given his trash footprint. This time range was chosen in order to to avoid the potential complications that could arise if, for some reasons, the municipality did not call the "setBeginningYear" function exactly on 1st January, or if the miners took days to mine the block with the "setBeginningYear" function. That function sets the beginning day of the current year. The more the citizen has recycled, the bigger is the payout:<br>
-  ![equation2](https://latex.codecogs.com/gif.latex?payout_%7Bt%7D%20%3D%20TARI_%7Bt%7D%20%5Ccdot%20%5Cmathbf%7Bpercentage_%7Brefund%7D%7D)
+  - **Municipality computes payout for all citizens and pays:** `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`  At the end of the year, more specifically between 20th and 28th of december, the Municipality computes the refund each citizen can benefit given his trash footprint. This time range was chosen in order to to avoid the potential complications that could arise if, for some reasons, the municipality did not call the "setBeginningYear" function exactly on 1st January, or if the miners took days to mine the block with the "setBeginningYear" function. That function sets the beginning day of the current year. The more the citizen has recycled, the bigger is the payout:<br>  
+          ![equation2](https://latex.codecogs.com/gif.latex?payout_%7Bt%7D%20%3D%20TARI_%7Bt%7D%20%5Ccdot%20%5Cmathbf%7Bpercentage_%7Brefund%7D%7D)
   
 | Percentage of recycled waste (x)  | Percentage of refund |
 | ------------- | ------------- |
