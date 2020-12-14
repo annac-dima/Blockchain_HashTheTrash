@@ -36,10 +36,7 @@ It's the beginning of the year and the Municipality must deploy the `agents.sol`
 ### 2. TARI 
   - **Municipality computes TARI for all citizens:** `function TariAmount(address _address)`  
 Before the end of January, the Municipality computes the TARI each citizen must pay, according to the following formula:  
-```math
-a^2+b^2=c^2
-```
-
+![equation](https://latex.codecogs.com/gif.latex?TARI%20%3D%20%5Cleft%20%28fee_%7Bmq%7D%5Ccdot%20mq%5Cright%20%29%20&plus;%20%5Cleft%20%28%20fee_%7Btrash%7D%20%5Ccdot%20trash%20%5Cright%20%29)
 
   - **All citizens pay TARI:** `function payTari() external payable onlyCitizen`    
  The Municipality notifies the due TARI amount to each citizen, who must invoke the "payTari()" function to deposit it. Citizens know both the TARI amount in wei and in euro, but they must pay it in wei. Therefore, they must have ETH to process the payment. 
