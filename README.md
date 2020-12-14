@@ -1,4 +1,4 @@
-# HASH the TRASH - A Rubbish Blockchain Application
+# HASH the TRASH - The Rubbish Blockchain Application
 HashTheTrash is a blockchain application for real-time waste tracking, based on two Ethereum Smart Contracts. The aim of this project is to increase the transparency along all the steps involved in the trash chain in order to improve waste management processes in developed countries, such as Italy, taken as reference for the simulation. 
 
 #### Why a rubbish blockchain?
@@ -19,12 +19,12 @@ pip install -r requirements.txt
 ```
 2. If not already downloaded, download [Ganache](https://www.trufflesuite.com/ganache), a developer tool that provides a personal Ethereum blockchain with 10 accounts to test Solidity contracts. 
 3. Run `HashTheTrash.ipynb` to simulate the creation and collection of waste. To work correctly, this file needs:
-   * 10 ETH accounts: there're the Municipality, 5 citizens, 1 non-recyclable truck and 1 recyclable one, 1 non-recyclable disposal station and 1 recyclable one. They are the 10 accounts provided directly by Ganache.
-   * `example_data.xlsx`: excel file containing the necessary data to perform a simulation. Stored in `data` folder. 
-   * Two Smart Contracts: stored in `contracts` folder with their ABI code.    
+   * 10 Ethereum external-owned accounts: they represent 1 Municipality, 5 citizens, 1 non-recyclable truck and 1 recyclable one, 1 non-recyclable disposal station and 1 recyclable one. The public keys are retrieved from the accounts provided by Ganache.
+   * `example_data.xlsx`: an excel file containing the necessary data to perform a simulation, stored in the `data` folder. 
+   * 2 Smart Contracts: stored in the `contracts` folder with their corresponding ABI code.    
 
 
-## Trash Chain 
+## Trash Chain step-by-step
 ### 1. AGENTS CREATION 
   - Creation of agents - *EXCEL SHEET = agents_data.xlsx* 
 
@@ -44,10 +44,10 @@ pip install -r requirements.txt
 
 
 ## Improvements: 
-For a real-life implementation of the Rubbish Blockchain, some improvements would be very useful:
--	For the unique identification of citizens, we could substitute their full name in the struct “Citizen” with their fiscal code.
--	Instead of simply classifying waste as recyclable or non-recyclable, we could be more specific and distinguish also the various types of recyclable waste, e.g. plastic, paper, glass, etc. This can be done pretty easily by substituting the Boolean “waste” (equal to true when waste is recyclable) with something on the line of `enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}`. The rest of the code would then need to be adapted to this small change.
--	The code could also be adapted to be compatible with waste collection systems that differ from the simple door-to-door collection system.
+The project stored in this repo sets the stage for a waste tracking system and could be improved with the following measures: 
+-	Fiscal Code: For the unique identification of citizens, their full name in the struct “Citizen” could be substitute with their fiscal code.
+-	Waste Types: Instead of simply classifying waste as recyclable or non-recyclable, the various types of waste (e.g. plastic, paper, glass, organic, mixed) can be considered. This can be done pretty easily by substituting the Boolean “waste” (equal to true when waste is recyclable) with something on the line of `enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}`. The rest of the code would then need to be adapted to this small change.
+-	Other waste collection methods: The code could also be adapted to be compatible with waste collection systems that differ from the simple door-to-door collection system.
 
 
 ## Privacy considerations:
