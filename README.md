@@ -1,37 +1,43 @@
 # Rubbish Blockchain 
-The aim of this project is to apply the blockchain technology to improve waste management processes in developed countries. The employment of a blockchain would result in the creation of a single decentralized platform which allows real-time tracking of waste through the various steps of the recycling process. It would thus be possible to track the amount of waste collected, who collected it, and where it is being moved for recycling or disposal. The increased transparency resulting from this would stop or at least reduce the number of ecological crimes related to waste treatment. Moreover, the blockchain technology could also be used to incentivize people to correctly dispose waste. In particular, smart contracts could be used to reward people with some tax reductions on the basis of their recycling behavior throughout the year. 
+HashTheTrash is a blockchain application for real-time waste tracking, based on two Ethereum Smart Contracts. The aim of this project is to increase the transparency along all the steps involved in the trash chain in order to improve waste management processes in developed countries, such as Italy, taken as reference for the simulation. 
 
-In this GitHub repository, you can find all the files and data needed to perform a simulation of the *Rubbish Blockchain* described above. In particular, for the purposes of the simulation, we consider a small municipality comprising of five people, two trucks, and two disposal stations, for a total of ten actors. In this way, it is possible to use all the ten Ethereum accounts provided by Ganache. Moreover, for simplicity, the garbage produced by the five citizens is simply classified as recyclable or non-recyclable, and waste collection is performed by trucks on the basis of a door-to-door system.
+#### Why a rubbish blockchain?
+Through the blockchain technology it would be possible to track the amount of waste collected, who collected it, and where it is being moved for recycling or disposal in a truly transparent way, leading to stopping, or at least reducing, the number of ecological crimes related to waste treatment. Moreover, this waste tracing enables the defintion of a "trash footprint" of each citizen, that could be used to incentivize people to correctly dispose waste. In particular, tracking each trash bag from its production to its disposal, would make it possible to reward citizens with some tax reductions on the basis of their recycling behavior throughout the year. 
 
-The two contracts stored in the folder `contract`, i.e. agents.sol and trashlife.sol, are the contracts that the Municipality would have to deploy at the beginning of each year, and then destroy at the end of each year. The Jupyter notebook `HashTheTrash` provides a clear and straightforward simulation of the functioning of these two contracts.
+#### Why blockchain? 
+The need of a public and permissionless blockchain, such as the Ethereum one, results from the multitude of actors involved in the garbage chain, whose interests are never unified and may be malicious. Up to now, waste management supervision remained controlled by the public sector and monitoring tools to check how public authorities manage the garbage chain are few. Therefore, HashTheTrash may solve this lack of measures to control controllers and ensure public sector's transparency and accountability. 
+
+#### Simulation 
+In this GitHub repository, all the files and data needed to perform a simulation of this waste tracking system are provided. In particular, for the purpose of the simulation, it has been considered a small municipality comprising of five citizens, two garbage trucks, and two disposal stations, for a total of ten actors. Moreover, for simplicity, the garbage produced by the five citizens is simply classified as recyclable or non-recyclable, and waste collection is performed by trucks on the basis of a door-to-door system.
+
+The whole application works with the deployment of two smart contracts, stored in the `contract` folder. The idea is that each Municipality would have to deploy at the beginning of each year both these contracts, and then destroy them at the end of each year. The Jupyter notebook `HashTheTrash.ipynb` provides a clear and straightforward simulation of the functioning of these two contracts.
  
-
 ## How to use this repo 
 1. Install `requirements`:
 ```shell script
 pip install -r requirements.txt
 ```
-2. If not already downloaded, download Ganache at the link https://www.trufflesuite.com/ganache
+2. If not already downloaded, download [Ganache](https://www.trufflesuite.com/ganache), a developer tool that provides a personal Ethereum blockchain with 10 accounts to test Solidity contracts. 
 3. Run `HashTheTrash.ipynb` to simulate the creation and collection of waste. To work correctly, this file needs:
-   * 10 ETH accounts: there're the Municipality, 5 citizens, 1 non-recyclable truck and 1 recyclable one, 1 non-recyclable disposal station and 1 recyclable one.
-   * `example_data.xlsx`: file containing necessary data to perform a simulation. Stored in `data` folder. 
+   * 10 ETH accounts: there're the Municipality, 5 citizens, 1 non-recyclable truck and 1 recyclable one, 1 non-recyclable disposal station and 1 recyclable one. They are the 10 accounts provided directly by Ganache.
+   * `example_data.xlsx`: excel file containing the necessary data to perform a simulation. Stored in `data` folder. 
    * Two Smart Contracts: stored in `contracts` folder with their ABI code.    
 
 
 ## Trash Chain 
 ### 1. AGENTS CREATION 
-  - Creation of agents - *EXCEL SHEET = agents_data* 
+  - Creation of agents - *EXCEL SHEET = agents_data.xlsx* 
 
 ### 2. TARI 
   - Municipality computes TARI for all citizens: `function TariAmount(address _address)`
   - All citizens pay TARI (for loop - therefore they all pay the same day): `function payTari() external payable onlyCitizen`
 
 ### 3. TRASH 
-  - Pick up trahs bags: `function pick(address _citizen, uint _wasteWeight, uint _random)` - *EXCEL SHEET = bags_data*   
+  - Pick up trahs bags: `function pick(address _citizen, uint _wasteWeight, uint _random)` - *EXCEL SHEET = bags_data.xlsx*   
 
-  - Drop bags at disposal station: `function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck)` - *EXCEL SHEET = gps_data*  
+  - Drop bags at disposal station: `function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck)` - *EXCEL SHEET = gps_data.xlsx*  
 
-  - Station last check: `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data*
+  - Station last check: `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data.xlsx*
 
 ### 4. REFUND
   - Municipality computes payout for all citizens (not saved in any variable) and pays: `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`
