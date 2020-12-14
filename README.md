@@ -20,18 +20,18 @@ pip install -r requirements.txt
 
 ## Trash Chain 
 ### 1. AGENTS CREATION 
-  - Creation of agents - *EXCEL SHEET = agents_data.xlsx* 
+  - Creation of agents - *EXCEL SHEET = agents_data* 
 
 ### 2. TARI 
   - Municipality computes TARI for all citizens: `function TariAmount(address _address)`
   - All citizens pay TARI (for loop - therefore they all pay the same day): `function payTari() external payable onlyCitizen`
 
 ### 3. TRASH 
-  - Pick up trahs bags: `function pick(address _citizen, uint _wasteWeight, uint _random)` - *EXCEL SHEET = bags_data.xlsx*   
+  - Pick up trahs bags: `function pick(address _citizen, uint _wasteWeight, uint _random)` - *EXCEL SHEET = bags_data*   
 
-  - Drop bags at disposal station: `function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck)` - *EXCEL SHEET = gps_data.xlsx*  
+  - Drop bags at disposal station: `function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck)` - *EXCEL SHEET = gps_data*  
 
-  - Station last check: `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data.xlsx*
+  - Station last check: `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data*
 
 ### 4. REFUND
   - Municipality computes payout for all citizens (not saved in any variable) and pays: `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`
