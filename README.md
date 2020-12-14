@@ -50,7 +50,8 @@ The Municipality notifies the due TARI amount to each citizen, who must invoke t
   - **Station last check:** `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data*
 
 ### 4. REFUND
-  - **Municipality computes payout for all citizens and pays:** `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`  At the end of the year, more specifically between 20th and 28th of december, the Municipality computes the refund each citizen can benefit given his trash footprint. This time range was chosen in order to to avoid the potential complications that could arise if, for some reasons, the municipality did not call the "setBeginningYear" function exactly on 1st January, or if the miners took days to mine the block with the "setBeginningYear" function. That function sets the beginning day of the current year. The more the citizen has recycled, the bigger is the payout. 
+  - **Municipality computes payout for all citizens and pays:** `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`  At the end of the year, more specifically between 20th and 28th of december, the Municipality computes the refund each citizen can benefit given his trash footprint. This time range was chosen in order to to avoid the potential complications that could arise if, for some reasons, the municipality did not call the "setBeginningYear" function exactly on 1st January, or if the miners took days to mine the block with the "setBeginningYear" function. That function sets the beginning day of the current year. The more the citizen has recycled, the bigger is the payout.   
+
 | First Header  | Second Header |
 | ------------- | ------------- |
 | Content Cell  | Content Cell  |
