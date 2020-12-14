@@ -30,14 +30,14 @@ Many attempts have been made before the finalization of the last version of this
 The following is a brief summary of the steps developed for the above-described Rubbish Blockchain Application. More information and descriptions are provided in `HashTheTrash.ipynb`. Some steps refer to an Excel sheet: it contains different external data that must be used as input for some functions embedded in the two smart contracts. The idea is that these external data are collected by off-chain tools and interact with Ethereum through Python libraries. 
 
 ### 1. AGENTS CREATION 
-  - Creation of agents - *EXCEL SHEET = agents_data* 
+  - Creation of agents - *EXCEL SHEET = agents_data*   
 It's the beginning of the year and the Municipality must deploy the `agents.sol` and `trashlife.sol` smart contracts. The latter inehrits from the former. Agents.sol contains all the necessary functions to create or delete agents. Agents are deleted if for example a citizen dies, a truck is scrapped or a station is closed. These functions can be invoked only by the Municipality to populate the list of citizens, garbage trucks and disposal stations involved in the waste chain for that year. Creating an agent means associating a certain ETH address with the corresponding information stored in the `data/example_data.xlsx/agents_data` sheet. This means that each citizen must have an ETH wallet, with some ETH to pay taxes. Trucks and Stations must have as well an ETH address but they won't use it for any money transfer. 
 
 ### 2. TARI 
-  - Municipality computes TARI for all citizens: `function TariAmount(address _address)`
- Before the end of January, the Municipality computes the TARI each citizen must pay, according to the following formula: 
- $$c = \sqrt{a^2 + b^2}$$
-  - All citizens pay TARI: `function payTari() external payable onlyCitizen`
+  - Municipality computes TARI for all citizens: `function TariAmount(address _address)`  
+ Before the end of January, the Municipality computes the TARI each citizen must pay, according to the following formula:   
+ $c = \sqrt{a^2 + b^2}$
+  - All citizens pay TARI: `function payTari() external payable onlyCitizen`  
  The Municipality notifies the due TARI amount to each citizen, who must invoke the "payTari()" function to deposit it. Citizens know both the TARI amount in wei and in euro, but they must pay it in wei. Therefore, they must have ETH to process the payment. 
 
 ### 3. TRASH 
