@@ -4,7 +4,7 @@ import time
 from web3 import Web3
 from contracts.abi_bytecode import abi # saved externally as .py
 
-# THINGS WE NEED!!  
+
 # Connecting to ganache through opened up PORT
 ganache_url = 'HTTP://127.0.0.1:7545'      #change here if different
 web3 = Web3(Web3.HTTPProvider(ganache_url))
