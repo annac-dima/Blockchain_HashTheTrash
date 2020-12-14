@@ -30,37 +30,39 @@ Many attempts have been made before the finalization of the last version of this
 The following is a brief summary of the steps developed for the above-described Rubbish Blockchain Application. More information and descriptions are provided in `HashTheTrash.ipynb`. Some steps refer to an Excel sheet: it contains different external data that must be used as input for some functions embedded in the two smart contracts. The idea is that these external data are collected by off-chain tools and interact with Ethereum through Python libraries. 
 
 ### 1. AGENTS CREATION 
-  - **Creation of agents - *EXCEL SHEET = agents_data* **
+  - **Creation of agents** - *EXCEL SHEET = agents_data*  
 It's the beginning of the year and the Municipality must deploy the `agents.sol` and `trashlife.sol` smart contracts. The latter inehrits from the former. Agents.sol contains all the necessary functions to create or delete agents. Agents are deleted if for example a citizen dies, a truck is scrapped or a station is closed. These functions can be invoked only by the Municipality to populate the list of citizens, garbage trucks and disposal stations involved in the waste chain for that year. Creating an agent means associating a certain ETH address with the corresponding information stored in the `data/example_data.xlsx/agents_data` sheet. This means that each citizen must have an ETH wallet, with some ETH to pay taxes. Trucks and Stations must have as well an ETH address but they won't use it for any money transfer. 
 
 ### 2. TARI 
-  - **Municipality computes TARI for all citizens:** `function TariAmount(address _address)`
-Before the end of January, the Municipality computes the TARI each citizen must pay, according to the following formula:   
+  - **Municipality computes TARI for all citizens:** `function TariAmount(address _address)`  
+Before the end of January, the Municipality computes the TARI each citizen must pay, according to the following formula:  
+```math
+a^2+b^2=c^2
+```
 
 
-  - **All citizens pay TARI:** `function payTari() external payable onlyCitizen`  
+  - **All citizens pay TARI:** `function payTari() external payable onlyCitizen`    
  The Municipality notifies the due TARI amount to each citizen, who must invoke the "payTari()" function to deposit it. Citizens know both the TARI amount in wei and in euro, but they must pay it in wei. Therefore, they must have ETH to process the payment. 
 
 ### 3. TRASH 
   - **Pick up trahs bags:** `function pick(address _citizen, uint _wasteWeight, uint _random)` - *EXCEL SHEET = bags_data*   
 
-  - **Drop bags at disposal station: `function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck)` - *EXCEL SHEET = gps_data*  **
+  - **Drop bags at disposal station:** `function drop(address _disposalStation, int _latitudeTruck, int _longitudeTruck)` - *EXCEL SHEET = gps_data*  
 
-  - Station last check: `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data*
+  - **Station last check:** `function received(bool _waste, address _truck, uint _weight)` - *EXCEL SHEET = stations_data*
 
 ### 4. REFUND
-  - Municipality computes payout for all citizens (not saved in any variable) and pays: `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`
+  - **Municipality computes payout for all citizens (not saved in any variable) and pays:** `function computePayout(address payable _citizen)`, `function givePayout(address payable _citizen)`
 
 
 ## Improvements: 
 The project stored in this repo sets the stage for a waste tracking system and could be improved with the following measures: 
--	Fiscal Code: For the unique identification of citizens, their full name in the struct “Citizen” could be substitute with their fiscal code.
--	Waste Types: Instead of simply classifying waste as recyclable or non-recyclable, the various types of waste (e.g. plastic, paper, glass, organic, mixed) can be considered. This can be done pretty easily by substituting the Boolean “waste” (equal to true when waste is recyclable) with something on the line of `enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}`. The rest of the code would then need to be adapted to this small change.
--	Other waste collection methods: The code could also be adapted to be compatible with waste collection systems that differ from the simple door-to-door collection system.
+-	**Fiscal Code:** For the unique identification of citizens, their full name in the struct “Citizen” could be substitute with their fiscal code.
+-	**Waste Types:** Instead of simply classifying waste as recyclable or non-recyclable, the various types of waste (e.g. plastic, paper, glass, organic, mixed) can be considered. This can be done pretty easily by substituting the Boolean “waste” (equal to true when waste is recyclable) with something on the line of `enum WasteType {Nonrecyclable, Paper, Plastic, Organic, Glass}`. The rest of the code would then need to be adapted to this small change.
+-	**Other waste collection methods:** The code could also be adapted to be compatible with waste collection systems that differ from the simple door-to-door collection system.
 
 ## Privacy considerations:
 For a real-life implementation of the Rubbish Blockchain, some privacy considerations could also be raised. The transparency of the blockchain has undoubtedly great advantages, since it allows to track waste through the various steps of the waste management process and thus reduces the number of ecological crimes related to waste treatment. However, this same transparency could also cause some problems. For example, assume that a malicious individual X was able to associate an Ethereum address to a specific citizen Y. By observing the transactions recorded on the blockchain, X could infer whether Y was on holiday, or in general away from his house, and burgle his house. Indeed, if for a period of time no transactions were recorded about trash bags generated by Y, X could assume that Y was not at home and take advantage of this situation. Therefore, if someone wanted to implement the Rubbish Blockchain in real life, it would be advisable to think further about the potential privacy issues that could arise from this. 
-
 
 ## Authors: 
  - Francesca Bianchessi 
