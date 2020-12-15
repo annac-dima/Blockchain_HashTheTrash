@@ -130,7 +130,7 @@ contract TrashLife is Agents {
 
     }
     
-    /* Define a function to verify the weight of waste the station has received by a trcuk. Only stations can call this function, specifying:
+    /* Define a function to verify the weight of waste that the station has received from a truck. Only stations can call this function, specifying:
         - the address of the truck whose cargo has been dumped;
         - the waste type of the station;
         - the total weight of waste entered in the station up to that moment.*/
