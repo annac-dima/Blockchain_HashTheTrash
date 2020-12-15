@@ -1,19 +1,19 @@
-## RUBBISH BLOCKCHAIN 
+# RUBBISH BLOCKCHAIN 
 
-### Idea:   
+### IDEA  
 The project is aimed at designing a blockchain application for waste tracking. We decided to rely on the Ethereum environment to track the amount of waste collected, who produced it, who collected it and how it is managed by the disposal stations. In this way, the application that we have envisioned would help in reducing the number of ecological crimes related to waste treatment.
 
-### Context:  
+### CONTEXT  
 Even though industrial waste is a central issue in this context, this application focuses on citizens’ private waste production. In this first and basic implementation, the whole project is developed to suit the door-to-door waste collection. In this regard, the trade-off was whether to design a blockchain application for shared waste bins or to focus on individual residents’ collection. In the end, we opted for the second alternative due to some of its features. Indeed, considering a door-to-door waste collection system makes it easier to clearly identify the waste producers and to design a straightforward mechanism for the functioning of the waste collection process. In fact, it is possible to employ a check on almost every rubbish bag, which helps in weighting and inspecting what has been produced.
 
 Nonetheless, a prototype of a smart contract dealing with the case of shared waste bins can be found in the GitHub repository (old_code/rubbishBlockchain.sol). Since in the end we have decided to focus on the door-to-door waste collection system, this code is not refined and clearly needs some improvements. Just to mention one, all the string types could be converted to integers (using the command enum for example), so that too much gas would not be wasted in comparisons like:   
 <div align="center"> require(keccak256(abi.encodePacked(roles[msg.sender])) == keccak256(abi.encodePacked(“truck”) 
 </div>   
 
-### Timing:  
+### TIMING
 Concerning time matters, the rubbish blockchain is designed to work on a yearly basis: the Municipality deploys the smart contracts at the beginning of each year, and then destroys them at the end of each year. In this way, it is possible to greatly reduce data storage problems, since, for example, there would be no need to keep updating the state variables year after year.
 
-### Actors: 
+### ACTORS 
 There are four main actors involved in the waste chain: citizens, trucks, stations and the municipality. Specifically, the municipality plays the role of the central authority controlling the creation and deletion of the agents from the chain. There are some tradeoffs and elements related to each of these actors of the chain. 
 
   1.	**Waste productors**: *citizens generating waste*  
@@ -30,12 +30,12 @@ As with citizens, garbage collectors are represented in the blockchain with a st
 Once verified that a truck has arrived at the appropriate station, the truck dumps its content, and at this point a further check is performed. The station has indeed to verify whether there is coherence between the amount of waste that a truck declares to have collected during the day, and the amount of waste that is actually dumped at the station. This check ensures that no rubbish is lost “on the way”.   
 Disposal stations are represented in the blockchain with a structure, and the collection of all disposal stations is then stored in a mapping, which maps a station’s Ethereum address to its structure. The structure contains information about the GPS coordinates of the station, the type of waste it disposes and the total amount of weight it has received over time. The Municipality is the only actor who can assign the “role” of station, thus preventing unauthorized entities to act as approved stations. 
 
-### Scalability trade-off:
+### SCALABILITY TRADE-OFF 
 One important aspect that needs to be taken into account when considering how to manage the numerous trash bags is scalability. Indeed, we cannot expect to be able to store on the blockchain all the data relative to every single trash bag. In order to overcome this problem, we decided to use events. When an event is emitted, the transaction logs are stored on blockchain and are externally accessible using the address of the contract. We therefore decided to emit various events for the different stages of the life cycle of a trash bag, listen to these events using python and web3, and store the relative information in a database outside the blockchain, thus avoiding the need to saving all these data directly on the blockchain.   
 
 Nonetheless, relaying on events can also pose some challenges. Someone may argue that storing important data outside the blockchain may be subject to potential manipulation. However, this is only partially true. Even though the municipality can temper with the data stored in the database at a later time, the logs of the events emitted throughout the year will still be stored in the blockchain and thus anyone would be able to verify the authenticity of the data in the database. 
 
-### Withdraw trade-off:
+### WITHDRAW TRADE-OFF
 In the contract ‘trashlife.sol’, the function *withdraw* allows the Municipality to withdraw some funds from the contract before the end of the year. Given that the citizens have to pay the TARI at the beginning of the year, but the refunds only happen at the end of the year, it may not be ideal to keep all the money in the contract for this whole time, thus preventing the Municipality from using a free and immediately available source of liquidity. On the other hand, it is also important to assure that, at the end of the year, the Municipality will be able to re-pay what they owe to all citizens. This trade-off between freezing funds and default risk can be partially solved by allowing the municipality to withdraw once a year 88% of the total funds stored in the contract. In this way, the Municipality can enjoy some immediate liquidity while at the same time guaranteeing to be solvent at the end of the year. Indeed, even assuming that all citizens recycled more than 75% of their waste, the maximum amount that the Municipality would have to pay to citizens is 10% of the total funds coming from the TARI payments. An additional 2% of the funds is kept in the contract to also take into account eventual transaction costs. 
 
 It is important to stress that this is just one of the potential solutions to the above-mentioned trade-off, and it is open to future improvements and modifications. For example, it could be possible to change the frequency and the way through which the Municipality is allowed to withdraw the funds, while also always ensuring that the Municipality is able to perform the pay-out operations at the end of each year. 
