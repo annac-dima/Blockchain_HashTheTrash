@@ -1,4 +1,4 @@
-# RUBBISH BLOCKCHAIN 
+# HASH the TRASH - The Rubbish Blockchain Application
 
 ### IDEA  
 The project is aimed at designing a blockchain application for waste tracking. We decided to rely on the Ethereum environment to track the amount of waste collected, who produced it, who collected it and how it is managed by the disposal stations. In this way, the application that we have envisioned would help in reducing the number of ecological crimes related to waste treatment.
