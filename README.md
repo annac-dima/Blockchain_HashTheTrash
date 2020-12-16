@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/annac-dima/Rubbish_Blockchain/blob/main/data/Logo.png" width="8" height="5" alt="Image"/>
+  <img src="https://github.com/annac-dima/Rubbish_Blockchain/blob/main/data/Logo.png" width="100" height="70" alt="Image"/>
 </p>
 
 # HASH the TRASH - The Rubbish Blockchain Application
