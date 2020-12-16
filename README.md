@@ -11,6 +11,8 @@ The need of a public and permissionless blockchain, such as the Ethereum one, re
 In this GitHub repository, all the files and data needed to perform a simulation of this waste tracking system are provided. In particular, for the purpose of the simulation, a small municipality has been considered, comprising of five citizens, two garbage trucks, and two disposal stations, for a total of ten actors. Moreover, for simplicity, the garbage produced by the five citizens is simply classified as recyclable or non-recyclable, and waste collection is performed by trucks on the basis of a door-to-door system.
 
 The whole application works with the deployment of two smart contracts, stored in the `contract` folder. The idea is that each Municipality would have to deploy both these contracts at the beginning of each year, and then destroy them at the end of each year. The Jupyter notebook `HashTheTrash.ipynb` provides a clear and straightforward simulation of the functioning of these two contracts.
+
+For more information about the Idea and the tackled trade-off, look at `IDEA.md`. 
  
 ## How to use this repo 
 1. Install `requirements`:
