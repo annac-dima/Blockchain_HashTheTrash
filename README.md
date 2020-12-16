@@ -12,7 +12,7 @@ In this GitHub repository, all the files and data needed to perform a simulation
 
 The whole application works with the deployment of two smart contracts, stored in the `contract` folder. The idea is that each Municipality would have to deploy both these contracts at the beginning of each year, and then destroy them at the end of each year. The Jupyter notebook `HashTheTrash.ipynb` provides a clear and straightforward simulation of the functioning of these two contracts.
 
-For more information about the Idea and the tackled trade-off, look at `IDEA.md`. 
+**For more information about the Idea and the tackled trade-off, look at `IDEA.md`.**
  
 ## How to use this repo 
 1. Install `requirements`:
